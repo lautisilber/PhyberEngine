@@ -1,5 +1,5 @@
-add_executable(GameTest main.cpp)
+project(GameTest)
 
-# set_property(TARGET GameTest PROPERTY CXX_STANDARD 20)
+add_executable(GameTest main.cpp)
 
 target_link_libraries(GameTest PRIVATE phyber_engine)
