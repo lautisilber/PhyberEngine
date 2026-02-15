@@ -486,6 +486,14 @@ Mat2x2 &Mat2x2::operator*=(float scalar) {
     return *this;
 }
 
+Mat2x2 Mat2x2::rotation_matrix(float radians) {
+    const float c = cos(radians);
+    const float s = sin(radians);
+    return Mat2x2(
+        c, -s, s, c
+    );
+}
+
 // Mat3x3
 
 Mat3x3 &Mat3x3::operator=(const Mat3x3 &mat) {
@@ -574,6 +582,33 @@ Mat3x3 &Mat3x3::operator*=(float scalar) {
         m[i] *= scalar;
     }
     return *this;
+}
+
+Mat3x3 Mat3x3::rotation_matrix(const Vec3 *radians) {
+    const float cx = cos(radians->x);
+    const float sx = sin(radians->x);
+    const float cy = cos(radians->y);
+    const float sy = sin(radians->y);
+    const float cz = cos(radians->z);
+    const float sz = sin(radians->z);
+
+    const Mat3x3 rot_x(
+        1, 0, 0,
+        0, cx, -sx,
+        0, sx, cx
+    );
+    const Mat3x3 rot_y(
+        cy, 0, sy,
+        0, 1, 0,
+        -sy, 0, cy
+    );
+    const Mat3x3 rot_z(
+        cz, -sz, 0,
+        sz, cz, 0,
+        0, 0, 1
+    );
+
+    return rot_z * rot_y * rot_x;
 }
 
 // Mat4x4

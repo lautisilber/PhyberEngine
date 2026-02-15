@@ -198,6 +198,8 @@ public:
     Mat2x2 &operator-=(const Mat2x2 &mat);
     Mat2x2 &operator*=(const Mat2x2 &mat);
     Mat2x2 &operator*=(float scalar);
+
+    static Mat2x2 rotation_matrix(float radians);
 };
 
 class Mat3x3 {
@@ -232,6 +234,8 @@ public:
     Mat3x3 &operator-=(const Mat3x3 &mat);
     Mat3x3 &operator*=(const Mat3x3 &mat);
     Mat3x3 &operator*=(float scalar);
+
+    static Mat3x3 rotation_matrix(const Vec3 *radians);
 };
 
 class Mat4x4 {
