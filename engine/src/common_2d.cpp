@@ -4,20 +4,20 @@
 
 using namespace Phyber;
 
-PhyberSprite phyber_create_sprite_from_pixels(Phyber2DPixel pixels[], uint16_t x, uint16_t y) {
+Sprite phyber_create_sprite_from_pixels(Pixel2d pixels[], uint16_t x, uint16_t y) {
     const size_t n = x * y;
-    const size_t size = sizeof(Phyber2DPixel) * n;
-    Phyber2DPixel *new_pixels = (Phyber2DPixel*)malloc(size);
+    const size_t size = sizeof(Pixel2d) * n;
+    Pixel2d *new_pixels = (Pixel2d*)malloc(size);
     memcpy(new_pixels, pixels, size);
-    PhyberSprite sprite = {
+    Sprite sprite = {
         new_pixels,
-        x, y,
-        0, 0
+        Vec2Int(x, y),
+        Vec2(0, 0)
     };
 
     return sprite;
 }
 
-void phyber_delete_sprite(PhyberSprite *sprite) {
+void phyber_delete_sprite(Sprite *sprite) {
     free(sprite->pixels);
 };

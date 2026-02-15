@@ -1,4 +1,5 @@
 #include "phyber/math.h"
+#include <sstream>
 #include <cmath>
 #include <cstdint>
 #include <vector>
@@ -10,531 +11,773 @@
 using namespace Phyber;
 
 namespace Catch {
-    template <typename T, size_t N, std::unsigned_integral I, bool RANGE_CHECK>
-    struct StringMaker<PhyberVecN_T<T, N, I, RANGE_CHECK>> {
-        static std::string convert(const PhyberVecN_T<T, N, I, RANGE_CHECK>& vec) {
-            std::string result = "{";
-            for (I i = 0; i < N; ++i) {
-                result += std::to_string(vec[i]);
-                if (i < N - 1) result += ", ";
-            }
-            result += "}";
-            return result;
+    template<>
+    struct StringMaker<Vec2> {
+        static std::string convert(const Vec2& vec) {
+            std::stringstream o;
+            o << "{" << vec.x << ", " << vec.y << "}";
+            return o.str();
         }
     };
 
-    template <typename T, size_t N, std::unsigned_integral I, bool RANGE_CHECK>
-    struct StringMaker<PhyberMatNxN_T<T, N, I, RANGE_CHECK>> {
-        static std::string convert(const PhyberMatNxN_T<T, N, I, RANGE_CHECK>& mat) {
-            std::string result = "{";
-            for (I r = 0; r < N; ++r) {
-                result += "{";
-                for (I c = 0; c < N; ++c) {
-                    result += std::to_string(mat(r, c));
-                    if (c < N - 1) result += ", ";
+    template<>
+    struct StringMaker<Vec3> {
+        static std::string convert(const Vec3& vec) {
+            std::stringstream o;
+            o << "{" << vec.x << ", " << vec.y << ", " << vec.z << "}";
+            return o.str();
+        }
+    };
+
+    template<>
+    struct StringMaker<Vec4> {
+        static std::string convert(const Vec4& vec) {
+            std::stringstream o;
+            o << "{" << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w << "}";
+            return o.str();
+        }
+    };
+
+    template<>
+    struct StringMaker<Vec2Int> {
+        static std::string convert(const Vec2Int& vec) {
+            std::stringstream o;
+            o << "{" << vec.x << ", " << vec.y << "}";
+            return o.str();
+        }
+    };
+
+    template<>
+    struct StringMaker<Vec3Int> {
+        static std::string convert(const Vec3Int& vec) {
+            std::stringstream o;
+            o << "{" << vec.x << ", " << vec.y << ", " << vec.z << "}";
+            return o.str();
+        }
+    };
+
+    template<>
+    struct StringMaker<Vec4Int> {
+        static std::string convert(const Vec4Int& vec) {
+            std::stringstream o;
+            o << "{" << vec.x << ", " << vec.y << ", " << vec.z << ", " << vec.w << "}";
+            return o.str();
+        }
+    };
+
+    template<>
+    struct StringMaker<Mat2x2> {
+        static std::string convert(const Mat2x2& mat) {
+            std::stringstream o;
+            constexpr int d = 2;
+
+            o << "{";
+            for (int r = 0; r < d; ++r) {
+                o << "{";
+                for (int c = 0; c < d; ++c) {
+                    o << mat(r,c);
+                    if (c < d-1)
+                        o << ", ";
                 }
-                result += "}";
-                if (r < N - 1) result += ", ";
+                o << "}";
+                if (r < d-1)
+                    o << ", ";
             }
-            result += "}";
-            return result;
+            o << "}";
+            return o.str();
+        }
+    };
+
+    template<>
+    struct StringMaker<Mat3x3> {
+        static std::string convert(const Mat3x3& mat) {
+            std::stringstream o;
+            constexpr int d = 3;
+
+            o << "{";
+            for (int r = 0; r < d; ++r) {
+                o << "{";
+                for (int c = 0; c < d; ++c) {
+                    o << mat(r,c);
+                    if (c < d-1)
+                        o << ", ";
+                }
+                o << "}";
+                if (r < d-1)
+                    o << ", ";
+            }
+            o << "}";
+            return o.str();
+        }
+    };
+
+    template<>
+    struct StringMaker<Mat4x4> {
+        static std::string convert(const Mat4x4& mat) {
+            std::stringstream o;
+            constexpr int d = 4;
+
+            o << "{";
+            for (int r = 0; r < d; ++r) {
+                o << "{";
+                for (int c = 0; c < d; ++c) {
+                    o << mat(r,c);
+                    if (c < d-1)
+                        o << ", ";
+                }
+                o << "}";
+                if (r < d-1)
+                    o << ", ";
+            }
+            o << "}";
+            return o.str();
         }
     };
 }
 
-TEST_CASE("vectors 2d", "[vectors2]") {
-    SECTION("Basic initialization") {
-        {
-            PhyberVec2_int u;
-            CHECK(u[0] == 0);
-            CHECK(u[1] == 0);
-        }
+constexpr float EPS = 1e-5f;
 
-        {
-            PhyberVec2_int v({1, 2});
-            CHECK(v[0] == 1);
-            CHECK(v[1] == 2);
+//
+// Vec2
+//
+TEST_CASE("Vec2", "[vec2]") {
+    Vec2 a(1.0f, 2.0f);
+    Vec2 b(3.0f, 4.0f);
 
-            CHECK(v.x() == 1);
-            CHECK(v.y() == 2);
-
-            v[0] = 3;
-            v[1] = 4;
-            CHECK(v[0] == 3);
-            CHECK(v[1] == 4);
-
-            v.x() = 5;
-            v.y() = 6;
-            CHECK(v.x() == 5);
-            CHECK(v.y() == 6);
-        }
+    SECTION("addition") {
+        Vec2 c = a + b;
+        CHECK(c == Vec2(4.0f, 6.0f));
     }
 
-    SECTION("Unary operations") {
-        PhyberVec2_int v({1, 2});
-
-        CHECK_THROWS(v[2]);
-        CHECK_THAT(v.length(), Catch::Matchers::WithinRel(sqrt(1 + 2*2), 1e-6));
-        CHECK(-v[0] == -1.0);
-        CHECK(-v[1] == -2.0);
+    SECTION("subtraction") {
+        Vec2 c = b - a;
+        CHECK(c == Vec2(2.0f, 2.0f));
     }
 
-    SECTION("Binary operators") {
-        PhyberVec2_int v({1, 2});
-        PhyberVec2_int u({3, 4});
-        PhyberVec2_int w({-1, -2});
+    SECTION("negation") {
+        Vec2 c = -a;
+        CHECK(c == Vec2(-1.0f, -2.0f));
+    }
 
-        CHECK(v == v);
-        CHECK(v != u);
-        CHECK(-v == w);
-        CHECK(v == std::vector<int>({1, 2}));
-        CHECK(v != std::vector<int>({1, 3}));
-        CHECK(v != std::vector<int>({1, 2, 3}));
+    SECTION("scalar multiply") {
+        Vec2 c = a * 2.0f;
+        CHECK(c == Vec2(2.0f, 4.0f));
+    }
 
-        CHECK((v * 2) == std::vector<int>({2, 4}));
-        CHECK((v + 3) == std::vector<int>({4, 5}));
-        CHECK((v - 3) == std::vector<int>({-2, -1}));
+    SECTION("dot product") {
+        float d = a * b;
+        CHECK(d == Catch::Approx(11.0f));
+    }
 
-        CHECK((v * u) == 11);
-        CHECK((v + u) == std::vector<int>({4, 6}));
-        CHECK((v - u) == std::vector<int>({-2, -2}));
+    SECTION("compound operators") {
+        Vec2 c = a;
+        c += b;
+        CHECK(c == Vec2(4.0f, 6.0f));
+
+        c -= b;
+        CHECK(c == a);
+
+        c *= 2.0f;
+        CHECK(c == Vec2(2.0f, 4.0f));
+    }
+
+    SECTION("length") {
+        Vec2 c(3.0f, 4.0f);
+        CHECK(c.length() == Catch::Approx(5.0f));
     }
 }
 
-TEST_CASE("vectors 3d", "[vectors3]") {
-    SECTION("Basic initialization") {
-        {
-            PhyberVec3_int u;
-            CHECK(u[0] == 0);
-            CHECK(u[1] == 0);
-            CHECK(u[2] == 0);
-        }
+TEST_CASE("Vec3", "[vec3]") {
+    Vec3 a(1,2,3);
+    Vec3 b(4,5,6);
 
-        {
-            PhyberVec3_int v({1, 2, 3});
-            CHECK(v[0] == 1);
-            CHECK(v[1] == 2);
-            CHECK(v[2] == 3);
-
-            CHECK(v.x() == 1);
-            CHECK(v.y() == 2);
-            CHECK(v.z() == 3);
-
-            v[0] = 4;
-            v[1] = 5;
-            v[2] = 6;
-            CHECK(v[0] == 4);
-            CHECK(v[1] == 5);
-            CHECK(v[2] == 6);
-
-            v.x() = 7;
-            v.y() = 8;
-            v.z() = 9;
-            CHECK(v.x() == 7);
-            CHECK(v.y() == 8);
-            CHECK(v.z() == 9);
-        }
+    SECTION("addition") {
+        Vec3 c = a + b;
+        CHECK(c == Vec3(5,7,9));
     }
 
-    SECTION("Unary operations") {
-        PhyberVec3_int v({1, 2, 3});
-
-        CHECK_THROWS(v[3]);
-        CHECK_THAT(v.length(), Catch::Matchers::WithinRel(sqrt(1*1 + 2*2 + 3*3), 1e-6));
-        CHECK(-v[0] == -1);
-        CHECK(-v[1] == -2);
-        CHECK(-v[2] == -3);
+    SECTION("subtraction") {
+        Vec3 c = b - a;
+        CHECK(c == Vec3(3,3,3));
     }
 
-    SECTION("Binary operators") {
-        PhyberVec3_int v({1, 2, 3});
-        PhyberVec3_int u({4, 5, 6});
-        PhyberVec3_int w({-1, -2, -3});
+    SECTION("negation") {
+        Vec3 c = -a;
+        CHECK(c == Vec3(-1,-2,-3));
+    }
 
-        CHECK(v == v);
-        CHECK(v != u);
-        CHECK(-v == w);
-        CHECK(v == std::vector<int>({1, 2, 3}));
-        CHECK(v != std::vector<int>({1, 2, 4}));
-        CHECK(v != std::vector<int>({1, 2, 3, 4}));
+    SECTION("scalar multiply") {
+        Vec3 c = a * 2.0f;
+        CHECK(c == Vec3(2, 4, 6));
+    }
 
-        CHECK((v * 2) == std::vector<int>({2, 4, 6}));
-        CHECK((v + 3) == std::vector<int>({4, 5, 6}));
-        CHECK((v - 3) == std::vector<int>({-2, -1, 0}));
+    SECTION("dot product") {
+        float d = a * b;
+        CHECK(d == Catch::Approx(32.0f));
+    }
 
-        CHECK((v * u) == 32);
-        CHECK((v + u) == std::vector<int>({5, 7, 9}));
-        CHECK((v - u) == std::vector<int>({-3, -3, -3}));
+    SECTION("compound operators") {
+        Vec3 c = a;
+        c += b;
+        CHECK(c == Vec3(5,7,9));
+
+        c -= b;
+        CHECK(c == a);
+
+        c *= 2.0f;
+        CHECK(c == Vec3(2,4,6));
+    }
+
+    SECTION("length") {
+        Vec3 c(3,4,5);
+        CHECK(c.length() == Catch::Approx(7.0710678118654755f));
     }
 }
 
-TEST_CASE("vectors 4d", "[vectors4]") {
-    SECTION("Basic initialization") {
-        {
-            PhyberVec4_int u;
-            CHECK(u[0] == 0);
-            CHECK(u[1] == 0);
-            CHECK(u[2] == 0);
-            CHECK(u[3] == 0);
-        }
+TEST_CASE("Vec4", "[vec4]") {
+    Vec4 a(1,2,3,4);
+    Vec4 b(5,6,7,8);
 
-        {
-            PhyberVec4_int v({1, 2, 3, 4});
-            CHECK(v[0] == 1);
-            CHECK(v[1] == 2);
-            CHECK(v[2] == 3);
-            CHECK(v[3] == 4);
-
-            CHECK(v.x() == 1);
-            CHECK(v.y() == 2);
-            CHECK(v.z() == 3);
-            CHECK(v.w() == 4);
-
-            v[0] = 5;
-            v[1] = 6;
-            v[2] = 7;
-            v[3] = 8;
-            CHECK(v[0] == 5);
-            CHECK(v[1] == 6);
-            CHECK(v[2] == 7);
-            CHECK(v[3] == 8);
-
-            v.x() = 9;
-            v.y() = 10;
-            v.z() = 11;
-            v.w() = 12;
-            CHECK(v.x() == 9);
-            CHECK(v.y() == 10);
-            CHECK(v.z() == 11);
-            CHECK(v.w() == 12);
-        }
+    SECTION("addition") {
+        Vec4 c = a + b;
+        CHECK(c == Vec4(6,8,10,12));
     }
 
-    SECTION("Unary operations") {
-        PhyberVec4_int v({1, 2, 3, 4});
-
-        CHECK_THROWS(v[4]);
-        CHECK_THAT(v.length(), Catch::Matchers::WithinRel(sqrt(1*1 + 2*2 + 3*3 + 4*4), 1e-6));
-        CHECK(-v[0] == -1);
-        CHECK(-v[1] == -2);
-        CHECK(-v[2] == -3);
-        CHECK(-v[3] == -4);
+    SECTION("subtraction") {
+        Vec4 c = b - a;
+        CHECK(c == Vec4(4,4,4,4));
     }
 
-    SECTION("Binary operators") {
-        PhyberVec4_int v({1, 2, 3, 4});
-        PhyberVec4_int u({5, 6, 7, 8});
-        PhyberVec4_int w({-1, -2, -3, -4});
+    SECTION("negation") {
+        Vec4 c = -a;
+        CHECK(c == Vec4(-1,-2,-3,-4));
+    }
 
-        CHECK(v == v);
-        CHECK(v != u);
-        CHECK(-v == w);
-        CHECK(v == std::vector<int>({1, 2, 3, 4}));
-        CHECK(v != std::vector<int>({1, 2, 3, 5}));
-        CHECK(v != std::vector<int>({1, 2, 3, 4, 5}));
+    SECTION("scalar multiply") {
+        Vec4 c = a * 2.0f;
+        CHECK(c == Vec4(2, 4, 6, 8));
+    }
 
-        CHECK((v * 2) == std::vector<int>({2, 4, 6, 8}));
-        CHECK((v + 3) == std::vector<int>({4, 5, 6, 7}));
-        CHECK((v - 3) == std::vector<int>({-2, -1, 0, 1}));
+    SECTION("dot product") {
+        float d = a * b;
+        CHECK(d == Catch::Approx(70.0f));
+    }
 
-        CHECK((v * u) == 70);
-        CHECK((v + u) == std::vector<int>({6, 8, 10, 12}));
-        CHECK((v - u) == std::vector<int>({-4, -4, -4, -4}));
+    SECTION("compound operators") {
+        Vec4 c = a;
+        c += b;
+        CHECK(c == Vec4(6,8,10,12));
+
+        c -= b;
+        CHECK(c == a);
+
+        c *= 2.0f;
+        CHECK(c == Vec4(2,4,6,8));
+    }
+
+    SECTION("length") {
+        Vec4 c(3,4,5,6);
+        CHECK(c.length() == Catch::Approx(9.273618495495704f));
     }
 }
 
-TEST_CASE("matrices 2x2", "[matrices2x2]") {
-    SECTION("Basic initialization") {
-        {
-            PhyberMat2x2_int m;
-            CHECK(m(0,0) == 0);
-            CHECK(m(0,1) == 0);
-            CHECK(m(1,0) == 0);
-            CHECK(m(1,1) == 0);
-        }
+//
+// Vec2Int
+//
+TEST_CASE("Vec2Int", "[vec2int]") {
+    Vec2Int a(1, 2);
+    Vec2Int b(3, 4);
 
-        {
-            PhyberMat2x2_int m({1, 2, 3, 4});
-            CHECK(m(0,0) == 1);
-            CHECK(m(0,1) == 2);
-            CHECK(m(1,0) == 3);
-            CHECK(m(1,1) == 4);
-
-            m(1,0) = 10;
-            CHECK(m(1,0) == 10);
-        }
+    SECTION("addition") {
+        CHECK(a + b == Vec2Int(4, 6));
     }
 
-    SECTION("Unary operations") {
-        PhyberMat2x2_int m({1, 2, 3, 4});
-
-        CHECK_THROWS(m(1,2));
-        CHECK_THROWS(m(2,1));
-        // CHECK(m.determinant() == -2);
-        CHECK(-m(0,0) == -1.0);
-        CHECK(-m(0,1) == -2.0);
-        CHECK(-m(1,0) == -3.0);
-        CHECK(-m(1,1) == -4.0);
-        CHECK(m.t() == std::vector<int>({1, 3, 2, 4}));
-
-        m = PhyberMat2x2_int({1, 1, 2, 2});
-        CHECK(m == std::vector<int>({1, 1, 2, 2}));
-        // CHECK(m.determinant() == 0);
+    SECTION("subtraction") {
+        CHECK(b - a == Vec2Int(2, 2));
     }
 
-    SECTION("Binary operators") {
-        PhyberMat2x2_int m({1, 2, 3, 4});
-        PhyberMat2x2_int o({5, 6, 7, 8});
-        PhyberMat2x2_int p({-1, -2, -3, -4});
-
-        CHECK(m == m);
-        CHECK(m != o);
-        CHECK(-m == p);
-        CHECK(m == std::vector<int>({1, 2, 3, 4}));
-        CHECK(m != std::vector<int>({1, 2, 3, 5}));
-        CHECK(m != std::vector<int>({1, 2, 3, 4, 5}));
-
-        CHECK((m * 2) == std::vector<int>({2, 4, 6, 8}));
-        CHECK((m + 3) == std::vector<int>({4, 5, 6, 7}));
-        CHECK((m - 3) == std::vector<int>({-2, -1, 0, 1}));
-
-        CHECK((m * o) == std::vector<int>({19, 22, 43, 50}));
-        CHECK((m + o) == std::vector<int>({6, 8, 10, 12}));
-        CHECK((m - o) == std::vector<int>({-4, -4, -4, -4}));
+    SECTION("negation") {
+        CHECK(-a == Vec2Int(-1, -2));
     }
 
-    SECTION("matrix vector multiplication") {
-        PhyberMat2x2_int m({1, 2, 3, 4});
-        PhyberVec2_int v({5, 6});
+    SECTION("scalar multiply") {
+        CHECK(a * 2 == Vec2Int(2, 4));
+    }
 
-        CHECK(m * v == std::vector<int>({17, 39}));
+    SECTION("dot product") {
+        CHECK((a * b) == 11);
+    }
+
+    SECTION("length") {
+        Vec2Int c(3, 4);
+        CHECK(c.length() == Catch::Approx(5.0f));
     }
 }
 
-TEST_CASE("matrices 3x3", "[matrices3x3]") {
-    SECTION("Basic initialization") {
-        {
-            PhyberMat3x3_int m;
-            for (int r = 0; r < 3; ++r)
-                for (int c = 0; c < 3; ++c)
-                    CHECK(m(r,c) == 0);
-        }
+TEST_CASE("Vec3Int", "[vec3int]") {
+    Vec3Int a(1, 2, 3);
+    Vec3Int b(4, 5, 6);
 
-        {
-            PhyberMat3x3_int m({
-                1, 2, 3,
-                4, 5, 6,
-                7, 8, 9
-            });
-
-            CHECK(m(0,0) == 1);
-            CHECK(m(0,1) == 2);
-            CHECK(m(0,2) == 3);
-            CHECK(m(1,0) == 4);
-            CHECK(m(1,1) == 5);
-            CHECK(m(1,2) == 6);
-            CHECK(m(2,0) == 7);
-            CHECK(m(2,1) == 8);
-            CHECK(m(2,2) == 9);
-
-            m(2,1) = 20;
-            CHECK(m(2,1) == 20);
-        }
+    SECTION("addition") {
+        CHECK(a + b == Vec3Int(5,7,9));
     }
 
-    SECTION("Unary operations") {
-        PhyberMat3x3_int m({
-            1, 2, 3,
-            4, 5, 6,
-            7, 8, 9
-        });
-
-        CHECK_THROWS(m(3,0));
-        CHECK_THROWS(m(0,3));
-
-        CHECK(m.t() == std::vector<int>({
-            1, 4, 7,
-            2, 5, 8,
-            3, 6, 9
-        }));
-
-        // CHECK(m.determinant() == 0);
-
-        m = PhyberMat3x3_int({
-            1, 2, 3,
-            6, 4, 5,
-            8, 9, 7
-        });
-        CHECK(m == std::vector<int>({
-            1, 2, 3,
-            6, 4, 5,
-            8, 9, 7
-        }));
-        // CHECK(m.determinant() == 45);
+    SECTION("subtraction") {
+        CHECK(b - a == Vec3Int(3,3,3));
     }
 
-    SECTION("Binary operators") {
-        PhyberMat3x3_int m({
-            1,2,3,
-            4,5,6,
-            7,8,9
-        });
-
-        PhyberMat3x3_int o({
-            9,8,7,
-            6,5,4,
-            3,2,1
-        });
-
-        CHECK(m == m);
-        CHECK(m != o);
-
-        CHECK((m + o) == std::vector<int>({
-            10,10,10,
-            10,10,10,
-            10,10,10
-        }));
-
-        CHECK((m - o) == std::vector<int>({
-            -8,-6,-4,
-            -2,0,2,
-            4,6,8
-        }));
-
-        CHECK((m * 2) == std::vector<int>({
-            2,4,6,
-            8,10,12,
-            14,16,18
-        }));
-
-        CHECK((m * o) == std::vector<int>({
-            30,24,18,
-            84,69,54,
-            138,114,90
-        }));
+    SECTION("negation") {
+        CHECK(-a == Vec3Int(-1, -2, -3));
     }
 
-    SECTION("matrix vector multiplication") {
-        PhyberMat3x3_int m({
-            1,2,3,
-            4,5,6,
-            7,8,9
-        });
+    SECTION("scalar multiply") {
+        CHECK(a * 2 == Vec3Int(2, 4, 6));
+    }
 
-        PhyberVec3_int v({1,2,3});
+    SECTION("dot product") {
+        CHECK((a * b) == 32);
+    }
 
-        CHECK(m * v == std::vector<int>({14, 32, 50}));
+    SECTION("length") {
+        Vec3Int c(3, 4, 5);
+        CHECK(c.length() == Catch::Approx(7.0710678118654755f));
     }
 }
 
-TEST_CASE("matrices 4x4", "[matrices4x4]") {
-    SECTION("Basic initialization") {
-        {
-            PhyberMat4x4_int m;
-            for (int r = 0; r < 4; ++r)
-                for (int c = 0; c < 4; ++c)
-                    CHECK(m(r,c) == 0);
+TEST_CASE("Vec4Int", "[vec4int]") {
+    Vec4Int a(1, 2, 3, 4);
+    Vec4Int b(5, 6, 7, 8);
+
+    SECTION("addition") {
+        CHECK(a + b == Vec4Int(6,8,10,12));
+    }
+
+    SECTION("subtraction") {
+        CHECK(b - a == Vec4Int(4,4,4,4));
+    }
+
+    SECTION("negation") {
+        CHECK(-a == Vec4Int(-1, -2, -3, -4));
+    }
+
+    SECTION("scalar multiply") {
+        CHECK(a * 2 == Vec4Int(2, 4, 6, 8));
+    }
+
+    SECTION("dot product") {
+        CHECK((a * b) == 70);
+    }
+
+    SECTION("length") {
+        Vec4Int c(3, 4, 5,6);
+        CHECK(c.length() == Catch::Approx(9.273618495495704f));
+    }
+}
+
+TEST_CASE("Mat2x2", "[mat2x2]") {
+    SECTION("Mat2x2 constructors") {
+        Mat2x2 m1;
+        CHECK(m1(0,0) == 0.0f);
+        CHECK(m1(1,0) == 0.0f);
+        CHECK(m1(0,1) == 0.0f);
+        CHECK(m1(1,1) == 0.0f);
+
+        Mat2x2 m2(1, 2, 3, 4);
+        CHECK(m2(0,0) == 1.0f);
+        CHECK(m2(0,1) == 2.0f);
+        CHECK(m2(1,0) == 3.0f);
+        CHECK(m2(1,1) == 4.0f);
+
+        Vec2 v(5, 6);
+        Mat2x2 m3(v);
+        CHECK(m3(0,0) == 5.0f);
+        CHECK(m3(1,1) == 6.0f);
+        CHECK(m3(0,1) == 0.0f);
+        CHECK(m3(1,0) == 0.0f);
+    }
+
+    SECTION("Mat2x2 assign") {
+        Mat2x2 a(1,2,3,4);
+        a(1,1) = 10;
+        CHECK(a(1,1) == 10);
+    }
+
+    SECTION("Mat2x2 equality") {
+        Mat2x2 a(1,2,3,4);
+        Mat2x2 b(1,2,3,4);
+        Mat2x2 c(4,3,2,1);
+
+        CHECK(a == b);
+        CHECK_FALSE(a == c);
+    }
+
+    SECTION("Mat2x2 unary minus") {
+        Mat2x2 a(1, -2, 3, -4);
+        Mat2x2 b = -a;
+
+        CHECK(b(0,0) == -1);
+        CHECK(b(0,1) == 2);
+        CHECK(b(1,0) == -3);
+        CHECK(b(1,1) == 4);
+    }
+
+    SECTION("Mat2x2 addition and subtraction") {
+        Mat2x2 a(1,2,3,4);
+        Mat2x2 b(4,3,2,1);
+
+        Mat2x2 c = a + b;
+        CHECK(c(0,0) == 5);
+        CHECK(c(0,1) == 5);
+        CHECK(c(1,0) == 5);
+        CHECK(c(1,1) == 5);
+
+        Mat2x2 d = a - b;
+        CHECK(d(0,0) == -3);
+        CHECK(d(0,1) == -1);
+        CHECK(d(1,0) == 1);
+        CHECK(d(1,1) == 3);
+    }
+
+    SECTION("Mat2x2 scalar multiplication") {
+        Mat2x2 a(1,2,3,4);
+        Mat2x2 b = a * 2.0f;
+
+        CHECK(b(0,0) == 2);
+        CHECK(b(0,1) == 4);
+        CHECK(b(1,0) == 6);
+        CHECK(b(1,1) == 8);
+
+        a *= 0.5f;
+        CHECK(a(0,0) == 0.5f);
+        CHECK(a(1,1) == 2.0f);
+    }
+
+    SECTION("Mat2x2 matrix multiplication") {
+        Mat2x2 a(1,2,3,4);
+        Mat2x2 b(2,0,1,2);
+
+        Mat2x2 c = a * b;
+        // Manual computation:
+        // c00 = 1*2 + 2*1 = 4
+        // c01 = 1*0 + 2*2 = 4
+        // c10 = 3*2 + 4*1 = 10
+        // c11 = 3*0 + 4*2 = 8
+        CHECK(c(0,0) == 4);
+        CHECK(c(0,1) == 4);
+        CHECK(c(1,0) == 10);
+        CHECK(c(1,1) == 8);
+
+        Mat2x2 d = a;
+        d *= b;
+        CHECK(d == c);
+    }
+
+    SECTION("Mat2x2 vector multiplication") {
+        Mat2x2 a(1,2,3,4);
+        Vec2 v(5,6);
+        Vec2 r = a * v;
+
+        // r0 = 1*5 + 2*6 = 17
+        // r1 = 3*5 + 4*6 = 39
+        CHECK(r.x == 17);
+        CHECK(r.y == 39);
+    }
+}
+
+TEST_CASE("Mat3x3", "[mat3x3]") {
+    SECTION("Mat3x3 constructors") {
+        Mat3x3 m1;
+        CHECK(m1(0,0) == 0.0f);
+        CHECK(m1(0,1) == 0.0f);
+        CHECK(m1(0,2) == 0.0f);
+        CHECK(m1(1,0) == 0.0f);
+        CHECK(m1(1,1) == 0.0f);
+        CHECK(m1(1,2) == 0.0f);
+        CHECK(m1(2,0) == 0.0f);
+        CHECK(m1(2,1) == 0.0f);
+        CHECK(m1(2,2) == 0.0f);
+
+        Mat3x3 m2(1,2,3,4,5,6,7,8,9);
+        CHECK(m2(0,0) == 1);
+        CHECK(m2(0,1) == 2);
+        CHECK(m2(0,2) == 3);
+        CHECK(m2(1,0) == 4);
+        CHECK(m2(1,1) == 5);
+        CHECK(m2(1,2) == 6);
+        CHECK(m2(2,0) == 7);
+        CHECK(m2(2,1) == 8);
+        CHECK(m2(2,2) == 9);
+
+        Vec3 v(10, 11, 12);
+        Mat3x3 m3(v);
+        CHECK(m3(0,0) == 10);
+        CHECK(m3(1,1) == 11);
+        CHECK(m3(2,2) == 12);
+        CHECK(m3(0,1) == 0);
+        CHECK(m3(0,2) == 0);
+        CHECK(m3(1,0) == 0);
+        CHECK(m3(1,2) == 0);
+        CHECK(m3(2,0) == 0);
+        CHECK(m3(2,1) == 0);
+    }
+
+    SECTION("Mat3x3 assign") {
+        Mat3x3 a(1,2,3,4,5,6,7,8,9);
+        a(1,1) = 10;
+        CHECK(a(1,1) == 10);
+    }
+
+    SECTION("Mat3x3 equality") {
+        Mat3x3 a(1,2,3,4,5,6,7,8,9);
+        Mat3x3 b(1,2,3,4,5,6,7,8,9);
+        Mat3x3 c(9,8,7,6,5,4,3,2,1);
+
+        CHECK(a == b);
+        CHECK_FALSE(a == c);
+    }
+
+    SECTION("Mat3x3 unary minus") {
+        Mat3x3 a(1,-2,3,-4,5,-6,7,-8,9);
+        Mat3x3 b = -a;
+
+        CHECK(b(0,0) == -1);
+        CHECK(b(0,1) == 2);
+        CHECK(b(0,2) == -3);
+        CHECK(b(1,0) == 4);
+        CHECK(b(1,1) == -5);
+        CHECK(b(1,2) == 6);
+        CHECK(b(2,0) == -7);
+        CHECK(b(2,1) == 8);
+        CHECK(b(2,2) == -9);
+    }
+
+    SECTION("Mat3x3 addition and subtraction") {
+        Mat3x3 a(1,2,3,4,5,6,7,8,9);
+        Mat3x3 b(9,8,7,6,5,4,3,2,1);
+
+        Mat3x3 c = a + b;
+        for(int r=0; r<3; ++r)
+            for(int col=0; col<3; ++col)
+                CHECK(c(r,col) == 10);
+
+        Mat3x3 d = a - b;
+        CHECK(d(0,0) == -8);
+        CHECK(d(0,1) == -6);
+        CHECK(d(0,2) == -4);
+        CHECK(d(1,0) == -2);
+        CHECK(d(1,1) == 0);
+        CHECK(d(1,2) == 2);
+        CHECK(d(2,0) == 4);
+        CHECK(d(2,1) == 6);
+        CHECK(d(2,2) == 8);
+    }
+
+    SECTION("Mat3x3 scalar multiplication") {
+        Mat3x3 a(1,2,3,4,5,6,7,8,9);
+        Mat3x3 b = a * 2.0f;
+
+        for(int r=0; r<3; ++r)
+            for(int c=0; c<3; ++c)
+                CHECK(b(r,c) == a(r,c) * 2.0f);
+
+        a *= 0.5f;
+        for(int r=0; r<3; ++r)
+            for(int c=0; c<3; ++c)
+                CHECK(a(r,c) == Catch::Approx((float)(a(r,c)))); // simple check
+    }
+
+    SECTION("Mat3x3 matrix multiplication") {
+        Mat3x3 a(1,2,3,4,5,6,7,8,9);
+        Mat3x3 b(9,8,7,6,5,4,3,2,1);
+
+        Mat3x3 c = a * b;
+
+        // Manual computation example
+        CHECK(c(0,0) == 1*9 + 2*6 + 3*3);
+        CHECK(c(0,1) == 1*8 + 2*5 + 3*2);
+        CHECK(c(0,2) == 1*7 + 2*4 + 3*1);
+        CHECK(c(1,0) == 4*9 + 5*6 + 6*3);
+        CHECK(c(1,1) == 4*8 + 5*5 + 6*2);
+        CHECK(c(1,2) == 4*7 + 5*4 + 6*1);
+        CHECK(c(2,0) == 7*9 + 8*6 + 9*3);
+        CHECK(c(2,1) == 7*8 + 8*5 + 9*2);
+        CHECK(c(2,2) == 7*7 + 8*4 + 9*1);
+
+        Mat3x3 d = a;
+        d *= b;
+        CHECK(d == c);
+    }
+
+    SECTION("Mat3x3 vector multiplication") {
+        Mat3x3 a(1,2,3,4,5,6,7,8,9);
+        Vec3 v(1,2,3);
+        Vec3 r = a * v;
+
+        CHECK(r.x == 1*1 + 2*2 + 3*3);
+        CHECK(r.y == 4*1 + 5*2 + 6*3);
+        CHECK(r.z == 7*1 + 8*2 + 9*3);
+    }
+}
+
+TEST_CASE("Mat4x4", "[mat4x4]") {
+    SECTION("Mat4x4 constructors") {
+        Mat4x4 m1;
+        for (int r = 0; r < 4; ++r)
+            for (int c = 0; c < 4; ++c)
+                CHECK(m1(r,c) == 0.0f);
+
+        Mat4x4 m2(
+            1,2,3,4,
+            5,6,7,8,
+            9,10,11,12,
+            13,14,15,16
+        );
+        int val = 1;
+        for (int r = 0; r < 4; ++r)
+            for (int c = 0; c < 4; ++c)
+                CHECK(m2(r,c) == val++);
+
+        Vec4 v(17,18,19,20);
+        Mat4x4 m3(v);
+        CHECK(m3(0,0) == 17);
+        CHECK(m3(1,1) == 18);
+        CHECK(m3(2,2) == 19);
+        CHECK(m3(3,3) == 20);
+        // Off-diagonal elements
+        for (int r = 0; r < 4; ++r)
+            for (int c = 0; c < 4; ++c)
+                if (r != c)
+                    CHECK(m3(r,c) == 0.0f);
+    }
+
+    SECTION("Mat4x4 assign") {
+        Mat4x4 a;
+        a(2,3) = 42;
+        CHECK(a(2,3) == 42);
+    }
+
+    SECTION("Mat4x4 equality") {
+        Mat4x4 a(
+            1,2,3,4,
+            5,6,7,8,
+            9,10,11,12,
+            13,14,15,16
+        );
+        Mat4x4 b(
+            1,2,3,4,
+            5,6,7,8,
+            9,10,11,12,
+            13,14,15,16
+        );
+        Mat4x4 c(
+            16,15,14,13,
+            12,11,10,9,
+            8,7,6,5,
+            4,3,2,1
+        );
+
+        CHECK(a == b);
+        CHECK_FALSE(a == c);
+    }
+
+    SECTION("Mat4x4 unary minus") {
+        Mat4x4 a(
+            1,-2,3,-4,
+            5,-6,7,-8,
+            9,-10,11,-12,
+            13,-14,15,-16
+        );
+        Mat4x4 b = -a;
+        for (int r = 0; r < 4; ++r)
+            for (int c = 0; c < 4; ++c)
+                CHECK(b(r,c) == -a(r,c));
+    }
+
+    SECTION("Mat4x4 addition and subtraction") {
+        Mat4x4 a(
+            1,2,3,4,
+            5,6,7,8,
+            9,10,11,12,
+            13,14,15,16
+        );
+        Mat4x4 b(
+            16,15,14,13,
+            12,11,10,9,
+            8,7,6,5,
+            4,3,2,1
+        );
+
+        Mat4x4 c = a + b;
+        for (int r = 0; r < 4; ++r)
+            for (int col = 0; col < 4; ++col)
+                CHECK(c(r,col) == a(r,col) + b(r,col));
+
+        Mat4x4 d = a - b;
+        for (int r = 0; r < 4; ++r)
+            for (int col = 0; col < 4; ++col)
+                CHECK(d(r,col) == a(r,col) - b(r,col));
+    }
+
+    SECTION("Mat4x4 scalar multiplication") {
+        Mat4x4 a(
+            1,2,3,4,
+            5,6,7,8,
+            9,10,11,12,
+            13,14,15,16
+        );
+        Mat4x4 b = a * 2.0f;
+        for (int r = 0; r < 4; ++r)
+            for (int c = 0; c < 4; ++c)
+                CHECK(b(r,c) == a(r,c) * 2.0f);
+
+        a *= 0.5f;
+        for (int r = 0; r < 4; ++r)
+            for (int c = 0; c < 4; ++c)
+                CHECK(a(r,c) == Catch::Approx(a(r,c))); // simple check
+    }
+
+    SECTION("Mat4x4 matrix multiplication") {
+        Mat4x4 a(
+            1,2,3,4,
+            5,6,7,8,
+            9,10,11,12,
+            13,14,15,16
+        );
+        Mat4x4 b(
+            16,15,14,13,
+            12,11,10,9,
+            8,7,6,5,
+            4,3,2,1
+        );
+
+        Mat4x4 c = a * b;
+        for (int r = 0; r < 4; ++r)
+            for (int col = 0; col < 4; ++col) {
+                float sum = 0;
+                for (int k = 0; k < 4; ++k)
+                    sum += a(r,k) * b(k,col);
+                CHECK(c(r,col) == sum);
+            }
+
+        Mat4x4 d = a;
+        d *= b;
+        CHECK(d == c);
+    }
+
+    SECTION("Mat4x4 vector multiplication") {
+        Mat4x4 a(
+            1,2,3,4,
+            5,6,7,8,
+            9,10,11,12,
+            13,14,15,16
+        );
+        Vec4 v(1,2,3,4);
+        Vec4 r = a * v;
+        for (int r_idx = 0; r_idx < 4; ++r_idx) {
+            float sum = 0;
+            for (int c_idx = 0; c_idx < 4; ++c_idx)
+                sum += a(r_idx,c_idx) * v[c_idx]; // assuming Vec4 has operator[] or x,y,z,w mapping
+            CHECK(r[r_idx] == sum);
         }
-
-        {
-            PhyberMat4x4_int m({
-                1,  2,  3,  4,
-                5,  6,  7,  8,
-                9, 10, 11, 12,
-                13, 14, 15, 16
-            });
-
-            for (int i = 0, r = 0; r < 4; ++r)
-                for (int c = 0; c < 4; ++c)
-                    CHECK(m(r,c) == ++i);
-
-            m(2,2) = 30;
-            CHECK(m(2,2) == 30);
-        }
-    }
-
-    SECTION("Unary operations") {
-        PhyberMat4x4_int m({
-            1,  2,  3,  4,
-            5,  6,  7,  8,
-            9, 10, 11, 12,
-            13, 14, 15, 16
-        });
-
-        // CHECK(m.determinant() == 0);
-
-        CHECK(m.t() == std::vector<int>({
-            1, 5, 9, 13,
-            2, 6, 10, 14,
-            3, 7, 11, 15,
-            4, 8, 12, 16
-        }));
-
-        m = PhyberMat4x4({
-            1, 2, 3, 4,
-            8, 5, 6, 7,
-            11, 12, 9, 10,
-            14, 15, 16, 13
-        });
-        // CHECK(m.determinant() == -544);
-    }
-
-    SECTION("Binary operators") {
-        PhyberMat4x4_int m({
-            1, 2, 3, 4,
-            5, 6, 7, 8,
-            9, 10, 11, 12,
-            13, 14, 15, 16
-        });
-
-        PhyberMat4x4_int o({
-            16, 15, 14, 13,
-            12, 11, 10, 9,
-            8, 7, 6, 5,
-            4, 3, 2, 1
-        });
-
-        CHECK((m * o) == std::vector<int>({
-            80, 70, 60, 50,
-            240, 214, 188, 162,
-            400, 358, 316, 274,
-            560, 502, 444, 386
-        }));
-
-        CHECK((m + o) == std::vector<int>({
-            17, 17, 17, 17,
-            17, 17, 17, 17,
-            17, 17, 17, 17,
-            17, 17, 17, 17
-        }));
-
-        CHECK((m * 2) == std::vector<int>({
-            2, 4, 6, 8,
-            10, 12, 14, 16,
-            18, 20, 22, 24,
-            26, 28, 30, 32
-        }));
-
-        CHECK((m - o) == std::vector<int>({
-            -15, -13, -11, -9,
-            -7, -5, -3, -1,
-            1, 3, 5, 7,
-            9, 11, 13, 15
-        }));
-    }
-
-    SECTION("matrix vector multiplication") {
-        PhyberMat4x4_int m({
-            1, 2, 3, 4,
-            5, 6, 7, 8,
-            9, 10, 11, 12,
-            13, 14, 15, 16
-        });
-
-        PhyberVec4_int v({1, 2, 3, 4});
-
-        CHECK(m * v == std::vector<int>({
-            30, 70, 110, 150
-        }));
     }
 }

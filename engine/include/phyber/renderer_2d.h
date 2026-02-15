@@ -12,9 +12,13 @@
 #define PHYBER_ENGINE_RESOLUTION_PX_HEIGHT 256
 #endif
 
-extern bool phyber_add_game_object_to_stack(const Phyber2DGameObject *go);
-extern bool phyber_remove_game_object_to_stack(const Phyber2DGameObject *go);
+namespace Phyber {
+
+extern bool phyber_add_game_object_to_stack(const GameObject2d *go);
+extern bool phyber_remove_game_object_to_stack(const GameObject2d *go);
 
 extern void phyber_render_2d();
+
+}
 
 #endif /* PHYBER_ENGINE_RENDERER_2D_H */

@@ -1,8 +1,10 @@
 project(phyber_engine)
 
+file(GLOB SRC_FILES "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp")
 add_library(phyber_engine STATIC
-    "${CMAKE_CURRENT_LIST_DIR}/src/math.cpp"
-    "${CMAKE_CURRENT_LIST_DIR}/src/common_2d.cpp"
+    ${SRC_FILES}
+    # "${CMAKE_CURRENT_LIST_DIR}/src/math.cpp"
+    # "${CMAKE_CURRENT_LIST_DIR}/src/common_2d.cpp"
     # "${CMAKE_CURRENT_LIST_DIR}/src/renderer_2d.cpp"
 )
 
