@@ -13,6 +13,7 @@
 #include <cmath>
 #include <array>
 #include <vector>
+#include <optional>
 
 #include "phyber/utils/defs.h"
 
@@ -203,7 +204,7 @@ public:
         return v;
     }
     [[nodiscard]] auto operator-() const requires(N == 4) {
-        PhyberVecN_T<T, N, I, RANGE_CHECK> v({-_vec[0], -_vec[1], -_vec[2], -_vec[4]});
+        PhyberVecN_T<T, N, I, RANGE_CHECK> v({-_vec[0], -_vec[1], -_vec[2], -_vec[3]});
         return v;
     }
     [[nodiscard]] auto operator-() const {
@@ -288,7 +289,7 @@ public:
     [[nodiscard]] auto operator+(const PhyberVecN_T<U, N, J, RC2> &v) const requires(N == 4) {
         using V = decltype(std::declval<T&>() + std::declval<U&>());
         using K = std::common_type_t<I, J>;
-        PhyberVecN_T<U, N, K, RANGE_CHECK | RC2> u({_vec[0]+v._vec[0], _vec[1]+v._vec[1], _vec[2]+v._vec[2], _vec[4]+v._vec[4]});
+        PhyberVecN_T<U, N, K, RANGE_CHECK | RC2> u({_vec[0]+v._vec[0], _vec[1]+v._vec[1], _vec[2]+v._vec[2], _vec[3]+v._vec[3]});
         return u;
     }
     template <Arithmetic U, std::unsigned_integral J, bool RC2>
@@ -600,7 +601,7 @@ public:
         // same as (scalar*Identity) * this
         using V = decltype(std::declval<T&>() * std::declval<U&>());
         PhyberMatNxN_T<V, N, I, RANGE_CHECK> new_mat({(*this)(0,0) * scalar, (*this)(0,1) * scalar, (*this)(0,2) * scalar, (*this)(0,3) * scalar,
-                                                      (*this)(1,0) * scalar, (*this)(1,1) * scalar, (*this)(1,2) * scalar, (*this)(0,3) * scalar,
+                                                      (*this)(1,0) * scalar, (*this)(1,1) * scalar, (*this)(1,2) * scalar, (*this)(1,3) * scalar,
                                                       (*this)(2,0) * scalar, (*this)(2,1) * scalar, (*this)(2,2) * scalar, (*this)(2,3) * scalar,
                                                       (*this)(3,0) * scalar, (*this)(3,1) * scalar, (*this)(3,2) * scalar, (*this)(3,3) * scalar});
         return new_mat;
@@ -922,40 +923,74 @@ public:
         return out;
     }
 
-    [[nodiscard]] T determinant() const requires(N == 2) {
-        return (*this)(0,0) * (*this)(1,1) - (*this)(0,1) * (*this)(1,0);
-    }
-    [[nodiscard]] T determinant() const {
-        return _determinant_impl(*this);
-    }
+    // template <typename V = std::common_type_t<T, float>>
+    // [[nodiscard]] auto triangulate(V *determinant_multiplier=nullptr) const {
+    //     #error "not implemented"
+    //     // To perform row reduction on a matrix, one uses a sequence of elementary row operations
+    //     // - swapping two rows
+    //     // - multiplying a row by a nonzero number
+    //     // - adding a multiple of one row to another row
+    //     //
+    //     // Using these operations, a matrix can always be transformed into reduced row echelon
+    //     // form: each nonzero row is above every zero row, each nonzero row has leftmost nonzero
+    //     // entry equal to 1, the columns containing these leading 1s have all other entries 0,
+    //     // and the leading 1 in each nonzero row is to the right of the leading 1 in the previous
+    //     // row.
 
-private:
-    // Helper function
-    template<size_t M>
-    [[nodiscard]] static T _determinant_impl(const PhyberMatNxN_T<T, M, I, RANGE_CHECK> &mat) {
-        if constexpr(N == 1) { return mat(0,0); }
-        else if constexpr(N == 2) {
-            return mat(0,0) * mat(1,1) - mat(0,1) * mat(1,0);
-        }
+    //     PhyberMatNxN_T<V, N, I, RANGE_CHECK> m = *this;
 
-        T res{};
-        for (I c = 0; c < N; ++c) {
-            // Build submatrix by skipping row 0 and column 'col'
-            PhyberMatNxN_T<T, N-1, I, RANGE_CHECK> sub;
-            for (I i = 1; i < N; ++i) {
-                I subcol = 0;
-                for (I j = 0; j < N; ++j) {
-                    if (j == c) continue;
-                    sub(i-1, subcol++) = mat(i,j);
-                }
-            }
+    //     auto swap = [&m, determinant_multiplier](I r1, I r2) {
+    //         if (determinant_multiplier)
+    //             *determinant_multiplier = -*determinant_multiplier;
+    //         for (I c = 0; c < N; ++c) {
+    //             std::swap(m._mat[r1 * N + c], m._mat[r2 * N + c]);
+    //         }
+    //     };
+    //     auto multiply = [&m, determinant_multiplier](I r, V scalar) {
+    //         if (determinant_multiplier)
+    //             *determinant_multiplier *= scalar;
+    //         for (I c = 0; c < N; ++c) {
+    //             m._mat[r * N + c] *= scalar;
+    //         }
+    //     };
+    //     auto add_mult = [&m](I r_dest, I r_src, V mult) {
+    //         for (I c = 0; c < N; ++c) {
+    //             m._mat[r_dest * N + c] += m._mat[r_src * N + c] * mult;
+    //         }
+    //     };
 
-            T sign = (c % 2 == 0) ? T(1) : T(-1);
-            res += sign * mat(0, c) * _determinant_impl(sub);
-        }
+    //     // naive approach: make everything a float and not care about numerical error
+    //     *determinant_multiplier = V(-1);
+    //     for (I r = 0; r < N; ++r) {
+    //         for (I _r = r+1; _r < N; ++_r) {
+    //             V mult = - m(_r,_r) / m(r,r);
+    //             add_mult(_r, r, mult);
+    //         }
+    //     }
 
-        return res;
-    }
+    //     return m;
+    // }
+
+    // [[nodiscard]] T determinant() const {
+    //     #error "not implemented"
+    //     // To explain how Gaussian elimination allows the computation of the determinant of a
+    //     // square matrix, we have to recall how the elementary row operations change the determinant:
+    //     // - Swapping two rows multiplies the determinant by −1
+    //     // - Multiplying a row by a nonzero scalar multiplies the determinant by the same scalar
+    //     // - Adding to one row a scalar multiple of another does not change the determinant.
+
+    //     using V = std::common_type_t<T, float>;
+    //     V determinant_multiplier = V(1);
+    //     PhyberMatNxN_T<V, N, I, RANGE_CHECK> triangular = this->triangulate(&determinant_multiplier);
+
+    //     V determinant = triangular(0,0);
+    //     for (I i = 1; i < N; ++i) {
+    //         determinant *= triangular(i,i);
+    //     }
+    //     determinant /= determinant_multiplier;
+
+    //     return determinant;
+    // }
 };
 
 using PhyberVec2 = PhyberVecN_T<float, 2, uint8_t, true>;
