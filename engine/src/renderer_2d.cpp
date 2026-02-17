@@ -6,60 +6,84 @@
 
 using namespace Phyber;
 
-const GameObject2d *_gos[PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS];
-size_t _n_gos = 0;
+color_precision_t _buffer_2d[2][PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH][PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT][4];
 
-// rgba
-uint8_t _frame_buffer[PHYBER_ENGINE_RESOLUTION_PX_WIDTH * PHYBER_ENGINE_RESOLUTION_PX_HEIGHT][4];
-float _z_buffer[PHYBER_ENGINE_RESOLUTION_PX_WIDTH * PHYBER_ENGINE_RESOLUTION_PX_HEIGHT];
+Renderer2d::Renderer2d() {
+    memset(gos_active, 0, PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS * sizeof(bool));
+}
 
-bool phyber_add_game_object_to_stack(const GameObject2d *go) {
-    if (_n_gos >= PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS - 1) {
-        // Can't add more sprites!
+GameObject2d *Renderer2d::create_game_object() {
+    for (
+        bool *active_ptr = gos_active;
+        active_ptr - gos_active < PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS;
+        active_ptr++
+    ) {
+        if (!(*active_ptr)) {
+            GameObject2d *go = &gos[active_ptr - gos_active];
+            memset(go, 0, sizeof(GameObject2d));
+            return go;
+        }
+    }
+    return nullptr;
+}
+
+GameObject2d *Renderer2d::get_game_object(size_t n) {
+    if (
+        n >= PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS ||
+        !gos_active[n]
+    ) {
+        return nullptr;
+    }
+    return &gos[n];
+}
+
+bool Renderer2d::delete_game_object(size_t n) {
+    if (
+        n >= PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS ||
+        !gos_active[n]
+    ) {
         return false;
     }
-
-    _gos[_n_gos++] = go;
+    gos_active[n] = 0;
     return true;
 }
 
-bool phyber_remove_game_object_from_stack(const GameObject2d *go) {
-    for (size_t idx_to_remove = 0; idx_to_remove < PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS; ++idx_to_remove) {
-        if (_gos[idx_to_remove] != go) { continue; }
+bool Renderer2d::delete_game_object(GameObject2d *ptr) {
+    if (ptr < gos) return false;
+    return delete_game_object(ptr - gos);
+}
 
-        // found go in stack
-        if (idx_to_remove == PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS-1) {
-            _gos[PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS-1] = 0;
-        } else {
-            memmove(_gos + idx_to_remove, _gos + idx_to_remove + 1, (_n_gos - idx_to_remove) - 1);
+void Renderer2d::clear_buffer(buffer_t buffer, size_t width, size_t height) {
+    memset(buffer, 0, width * height * 4 * sizeof(color_precision_t));
+}
+
+void Renderer2d::fill_buffer(buffer_t buffer, size_t width, size_t height, color_precision_t r, color_precision_t g, color_precision_t b, color_precision_t a) {
+    for (size_t r = 0; r < width; ++r) {
+        for (size_t c = 0; c < height; ++c) {
+            color_precision_t *color = buffer[r][c];
+            color[0] = r;
+            color[1] = g;
+            color[2] = b;
+            color[3] = a;
         }
-        --idx_to_remove;
-        return true;
     }
-    // didn't find any coincidence
-    return false;
 }
 
-void _render_single_go(const GameObject2d *go) {
-    const Sprite *sprite = &go->sprite;
-    const Transform2d *transform = &go->transform;
+void Renderer2d::render(Renderer2d::buffer_t buffer, size_t width, size_t height) {
 
-    // const uint16_t sprite_width = sprite->width;
-    // const uint16_t sprite_height = sprite->height;
-    // const float sprite_center_x = sprite->center_x;
-    // const float sprite_center_y = sprite->center_y;
-
-    // render area = ra
-    Vec2 top_left(0, 0);
-    Vec2 bottom_right = sprite->size;
-
-    // apply scale
-    // transform->scale
-    // bottom_right *= identity(transform->scale)
 }
 
-void phyber_render_2d() {
-    for (size_t i = 0; i < _n_gos; ++i) {
+void Renderer2d::clear_buffer() {
+    memset(_buffer_2d[buffer_side], 0, PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH * PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT * 4 * sizeof(color_precision_t));
+}
 
+void Renderer2d::fill_buffer(color_precision_t r, color_precision_t g, color_precision_t b, color_precision_t a) {
+    for (size_t r = 0; r < PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH; ++r) {
+        for (size_t c = 0; c < PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT; ++c) {
+            _buffer_2d[buffer_side][r][c][0] = r;
+            _buffer_2d[buffer_side][r][c][1] = g;
+            _buffer_2d[buffer_side][r][c][2] = b;
+            _buffer_2d[buffer_side][r][c][3] = a;
+        }
     }
 }

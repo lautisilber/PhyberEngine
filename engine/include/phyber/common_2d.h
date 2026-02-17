@@ -5,52 +5,59 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "math.h"
 #include "phyber/math.h"
+#include "phyber/defs/global_defines.h"
 
 namespace Phyber {
 
-typedef struct {
-    uint8_t r, g, b, a;
-} Pixel2d;
+struct Pixel2d {
+    color_precision_t r, g, b, a;
+};
 
-typedef struct {
+struct Sprite {
     Pixel2d *pixels;
     Vec2Int size;
     Vec2 center;
-} Sprite;
 
-typedef struct {
+    void reset();
+    ~Sprite();
+};
+
+struct Transform2d {
     Vec3 pos; // cartesian
     float rot; // rotation in z axis
     Vec2 scale;
-} Transform2d;
 
-typedef struct {
+    void reset();
+};
+
+struct GameObject2d {
     Transform2d transform;
     Sprite sprite;
-} GameObject2d;
 
-typedef struct {
+    void reset();
+};
+
+struct Collider2dSquare {
     float top, left, bottom, right;
-} Collider2dSquare;
+};
 
 // typedef struct {
 //     float radius;
 // } PhyberCollider2DCirlce;
 
 // TODO: figure out how to have multiple collider types
-typedef struct {
+struct PhyberRigidBodyStatic2D {
     GameObject2d go;
     Collider2dSquare collider;
     float collider_plasticity;
-} PhyberRigidBodyStatic2D;
+};
 
-typedef struct {
+struct PhyberRigidBodyDynamic2D {
     PhyberRigidBodyStatic2D static_rbody;
     float vel_x, vel_y, vel_z;
     float mass;
-} PhyberRigidBodyDynamic2D;
+};
 
 extern Sprite phyber_create_sprite_from_pixels(Pixel2d pixels[], uint16_t x, uint16_t y);
 extern void phyber_delete_sprite(Sprite *pixel);
