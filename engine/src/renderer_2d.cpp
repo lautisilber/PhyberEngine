@@ -2,6 +2,8 @@
 #include "phyber/common_2d.h"
 #include "phyber/math.h"
 
+#include <SDL3/SDL.h>
+
 #include <cmath>
 #include <stdexcept>
 #include <string.h>

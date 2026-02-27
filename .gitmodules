@@ -1,3 +1,6 @@
 [submodule "engine/libs/catch2"]
 	path = engine/vendor/catch2
 	url = https://github.com/catchorg/Catch2.git
+[submodule "engine/vendor/SDL"]
+	path = engine/vendor/SDL
+	url = https://github.com/libsdl-org/SDL.git
