@@ -32,7 +32,7 @@ private:
     bool gos_active[PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS];
 
 public:
-    typedef color_precision_t*** buffer_t;
+    typedef color_precision_t* buffer_t;
     Renderer2d();
 
     GameObject2d *create_game_object();

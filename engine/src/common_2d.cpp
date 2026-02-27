@@ -4,18 +4,31 @@
 
 using namespace Phyber;
 
+Sprite::Sprite(color_precision_t *pixels, size_t width, size_t height, int center_x, int center_y) {
+
+}
+
+void Sprite::load_pixels(color_precision_t *pixels, size_t width, size_t height) {
+    if (pixels) {
+        free(pixels);
+    }
+    pixels = (color_precision_t *)malloc(width * height * 4 * sizeof(color_precision_t));
+    size = Phyber::Vec2Int(width, height);
+}
+
+
+Sprite::~Sprite() {
+    if (pixels) {
+        free(pixels);
+    }
+}
+
 void Sprite::reset() {
     if (pixels) {
         free(pixels);
     }
     size = Vec2Int(0,0);
     center = Vec2(0,0);
-}
-
-Sprite::~Sprite() {
-    if (pixels) {
-        free(pixels);
-    }
 }
 
 void Transform2d::reset() {
@@ -27,20 +40,6 @@ void Transform2d::reset() {
 void GameObject2d::reset() {
     transform.reset();
     sprite.reset();
-}
-
-Sprite phyber_create_sprite_from_pixels(Pixel2d pixels[], uint16_t x, uint16_t y) {
-    const size_t n = x * y;
-    const size_t size = sizeof(Pixel2d) * n;
-    Pixel2d *new_pixels = (Pixel2d*)malloc(size);
-    memcpy(new_pixels, pixels, size);
-    Sprite sprite = {
-        new_pixels,
-        Vec2Int(x, y),
-        Vec2(0, 0)
-    };
-
-    return sprite;
 }
 
 void phyber_delete_sprite(Sprite *sprite) {

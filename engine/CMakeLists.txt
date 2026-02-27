@@ -19,11 +19,11 @@ target_include_directories(phyber_engine
 # tests
 
 if(NOT DEFINED PHYBER_TESTS)
-set(PHYBER_TESTS ON)
+    set(PHYBER_TESTS ON)
 endif()
 
 if(PHYBER_TESTS)
-    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/libs/catch2")
+    add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/vendor/catch2")
 
     add_executable(phyber_engine_math_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/math_tests.cpp")
 

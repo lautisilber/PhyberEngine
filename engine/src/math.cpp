@@ -64,6 +64,11 @@ Vec2 &Vec2::operator*=(float scalar) {
     return *this;
 }
 
+Vec2 &Vec2::operator*=(const Mat2x2 &m) {
+    *this = m * (*this);
+    return *this;
+}
+
 float Vec2::length() const {
     return sqrt(*this * *this);
 }
@@ -128,6 +133,11 @@ Vec3 &Vec3::operator*=(float scalar) {
     x *= scalar;
     y *= scalar;
     z *= scalar;
+    return *this;
+}
+
+Vec3 &Vec3::operator*=(const Mat3x3 &m) {
+    *this = m * (*this);
     return *this;
 }
 
@@ -200,6 +210,11 @@ Vec4 &Vec4::operator*=(float scalar) {
     y *= scalar;
     z *= scalar;
     w *= scalar;
+    return *this;
+}
+
+Vec4 &Vec4::operator*=(const Mat4x4 &m) {
+    *this = m * (*this);
     return *this;
 }
 
@@ -584,31 +599,65 @@ Mat3x3 &Mat3x3::operator*=(float scalar) {
     return *this;
 }
 
-Mat3x3 Mat3x3::rotation_matrix(const Vec3 *radians) {
-    const float cx = cos(radians->x);
-    const float sx = sin(radians->x);
-    const float cy = cos(radians->y);
-    const float sy = sin(radians->y);
-    const float cz = cos(radians->z);
-    const float sz = sin(radians->z);
-
-    const Mat3x3 rot_x(
+Mat3x3 Mat3x3::rotation_matrix_x(float radians) {
+    const float c = cos(radians);
+    const float s = sin(radians);
+    return Mat3x3(
         1, 0, 0,
-        0, cx, -sx,
-        0, sx, cx
+        0, c, -s,
+        0, s, c
     );
-    const Mat3x3 rot_y(
-        cy, 0, sy,
+}
+
+Mat3x3 Mat3x3::rotation_matrix_y(float radians) {
+    const float c = cos(radians);
+    const float s = sin(radians);
+    return Mat3x3(
+        c, 0, s,
         0, 1, 0,
-        -sy, 0, cy
+        -s, 0, c
     );
-    const Mat3x3 rot_z(
-        cz, -sz, 0,
-        sz, cz, 0,
+}
+
+Mat3x3 Mat3x3::rotation_matrix_z(float radians) {
+    const float c = cos(radians);
+    const float s = sin(radians);
+    return Mat3x3(
+        c, -s, 0,
+        s, c, 0,
         0, 0, 1
     );
+}
 
-    return rot_z * rot_y * rot_x;
+
+Mat3x3 Mat3x3::rotation_matrix(const Vec3 *radians) {
+    return
+        Mat3x3::rotation_matrix_x(radians->x) *
+        Mat3x3::rotation_matrix_y(radians->y) *
+        Mat3x3::rotation_matrix_z(radians->z);
+}
+
+Mat3x3 Mat3x3::rotation_matrix(const Vec3Int *radians) {
+    return
+        Mat3x3::rotation_matrix_x(static_cast<float>(radians->x)) *
+        Mat3x3::rotation_matrix_y(static_cast<float>(radians->y)) *
+        Mat3x3::rotation_matrix_z(static_cast<float>(radians->z));
+}
+
+Mat3x3 Mat3x3::translation_2d_matrix(const Vec2 *translation) {
+    return Mat3x3({
+        1, 0, translation->x,
+        0, 1, translation->y,
+        0, 0, 1
+    });
+}
+
+Mat3x3 Mat3x3::translation_2d_matrix(const Vec2Int *translation) {
+    return Mat3x3({
+        1, 0, static_cast<float>(translation->x),
+        0, 1, static_cast<float>(translation->y),
+        0, 0, 1
+    });
 }
 
 // Mat4x4
@@ -729,4 +778,10 @@ Mat4x4 &Mat4x4::operator*=(float scalar) {
         m[i] *= scalar;
     }
     return *this;
+}
+
+float radians_to_range(float rad) {
+    constexpr float pi2 = M_PI * 2;
+    constexpr float pi2_inv = 1 / pi2;
+    return rad - pi2 * floorf(rad * pi2_inv);
 }

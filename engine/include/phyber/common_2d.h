@@ -5,22 +5,23 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "defs/global_defines.h"
 #include "phyber/math.h"
 #include "phyber/defs/global_defines.h"
 
 namespace Phyber {
 
-struct Pixel2d {
-    color_precision_t r, g, b, a;
-};
-
 struct Sprite {
-    Pixel2d *pixels;
+    color_precision_t *pixels = nullptr; // r, g, b, a
     Vec2Int size;
-    Vec2 center;
+    Vec2Int center;
 
-    void reset();
+    Sprite() {}
+    Sprite(color_precision_t *pixels, size_t width, size_t height, int center_x, int center_y);
     ~Sprite();
+
+    void load_pixels(color_precision_t *pixels, size_t width, size_t height);
+    void reset();
 };
 
 struct Transform2d {
@@ -58,9 +59,6 @@ struct PhyberRigidBodyDynamic2D {
     float vel_x, vel_y, vel_z;
     float mass;
 };
-
-extern Sprite phyber_create_sprite_from_pixels(Pixel2d pixels[], uint16_t x, uint16_t y);
-extern void phyber_delete_sprite(Sprite *pixel);
 
 }
 

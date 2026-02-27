@@ -8,6 +8,7 @@
 namespace Phyber {
 
 class Vec2Int;
+class Mat2x2;
 class Vec2 {
 public:
     float x = 0, y = 0;
@@ -31,11 +32,13 @@ public:
     Vec2 &operator+=(const Vec2 &v);
     Vec2 &operator-=(const Vec2 &v);
     Vec2 &operator*=(float scalar);
+    Vec2 &operator*=(const Mat2x2 &m);
 
     float length() const;
 };
 
 class Vec3Int;
+class Mat3x3;
 class Vec3 {
 public:
     float x = 0, y = 0, z = 0;
@@ -59,11 +62,13 @@ public:
     Vec3 &operator+=(const Vec3 &v);
     Vec3 &operator-=(const Vec3 &v);
     Vec3 &operator*=(float scalar);
+    Vec3 &operator*=(const Mat3x3 &m);
 
     float length() const;
 };
 
 class Vec4Int;
+class Mat4x4;
 class Vec4 {
 public:
     float x = 0, y = 0, z = 0, w = 0;
@@ -87,6 +92,7 @@ public:
     Vec4 &operator+=(const Vec4 &v);
     Vec4 &operator-=(const Vec4 &v);
     Vec4 &operator*=(float scalar);
+    Vec4 &operator*=(const Mat4x4 &m);
 
     float length() const;
 };
@@ -235,7 +241,13 @@ public:
     Mat3x3 &operator*=(const Mat3x3 &mat);
     Mat3x3 &operator*=(float scalar);
 
+    static Mat3x3 rotation_matrix_x(float radians);
+    static Mat3x3 rotation_matrix_y(float radians);
+    static Mat3x3 rotation_matrix_z(float radians);
     static Mat3x3 rotation_matrix(const Vec3 *radians);
+    static Mat3x3 rotation_matrix(const Vec3Int *radians);
+    static Mat3x3 translation_2d_matrix(const Vec2 *translation);
+    static Mat3x3 translation_2d_matrix(const Vec2Int *translation);
 };
 
 class Mat4x4 {
@@ -280,6 +292,8 @@ public:
     Mat4x4 &operator*=(const Mat4x4 &mat);
     Mat4x4 &operator*=(float scalar);
 };
+
+extern float radians_to_range(float rad);
 
 }
 
