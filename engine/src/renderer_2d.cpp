@@ -7,30 +7,97 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <memory.h>
 #include <string.h>
 
-using namespace Phyber;
+color_precision_t *Phyber::Renderer2d_cpu::buffer = nullptr;
+size_t buffer_pitch = 0;
 
-color_precision_t *buffer;
+SDL_Window* window = nullptr;
+SDL_Renderer* renderer = nullptr;
+SDL_Texture* texture = nullptr;
 
-SDL_Window* window;
-SDL_Renderer* renderer;
-SDL_Texture* texture;
-
-void init(unsigned int width, unsigned int height, bool resizable) {
+bool Phyber::Renderer2d_cpu::init(unsigned int width, unsigned int height) {
     // create a window
-    window = SDL_CreateWindow("Hello, streaming texture!", width, height, SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("Hello, streaming texture!", width, height, 0);
+    if (!window) {
+        PHYBER_LOG_CRITICAL("Couldn't get window: %s", SDL_GetError());
+        goto error;
+    }
 
     // get renderer
     renderer = SDL_CreateRenderer(window, NULL);
     if (!renderer) {
-        SDL_Log("Couldn't get renderer: %s", SDL_GetError());
-        // return SDL_APP_FAILURE;
+        PHYBER_LOG_CRITICAL("Couldn't get renderer: %s", SDL_GetError());
+        goto error;
     }
+
+    // create texture
+    texture = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_RGBA8888,
+        SDL_TEXTUREACCESS_STREAMING,
+        width,
+        height
+    );
+    if (!texture) {
+        PHYBER_LOG_CRITICAL("Couldn't create texture: %s", SDL_GetError());
+        goto error;
+    }
+
+    buffer_pitch = sizeof(color_precision_t) * width;
+    buffer = (color_precision_t*)malloc(buffer_pitch * height);
+    if (!buffer) {
+        PHYBER_LOG_CRITICAL("Coudln't allocate screen buffer");
+        goto error;
+    }
+
+    return true;
+
+    error:
+    deinit();
+    return false;
 }
 
-void render();
-void deinit();
+static bool buffer_to_screen() {
+    // update the texture
+    if (!SDL_UpdateTexture(
+        texture,                 // the texture to update.
+        NULL,                    // an SDL_Rect structure representing the area to update, or NULL to update the entire texture.
+        Phyber::Renderer2d_cpu::buffer,                  // the raw pixel data in the format of the texture.
+        buffer_pitch // the number of bytes in a row of pixel data, including padding between lines.
+    )) {
+        PHYBER_LOG_ERROR("Couldn't update texture: ", SDL_GetError());
+        return false;
+    }
+
+    // SDL_RenderClear(renderer);
+    if (!SDL_RenderTexture(renderer, texture, NULL, NULL)) {
+        PHYBER_LOG_ERROR("Couldn't render texture: ", SDL_GetError());
+        return false;
+    }
+    if (!SDL_RenderPresent(renderer)) {
+        PHYBER_LOG_ERROR("Couldn't present rendered texture: ", SDL_GetError());
+        return false;
+    }
+
+    return true;
+}
+
+bool Phyber::Renderer2d_cpu::render() {
+    return buffer_to_screen();
+}
+
+
+
+void Phyber::Renderer2d_cpu::deinit() {
+    if (buffer)
+        free(buffer);
+
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+}
 
 // color_precision_t _buffer_2d[2][PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH * PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT * 4];
 

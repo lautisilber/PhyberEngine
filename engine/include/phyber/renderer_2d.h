@@ -1,7 +1,6 @@
 #ifndef PHYBER_ENGINE_RENDERER_2D_H
 #define PHYBER_ENGINE_RENDERER_2D_H
 
-#include "defs/global_defines.h"
 #include "phyber/common_2d.h"
 #include "phyber/defs/global_defines.h"
 
@@ -27,8 +26,8 @@ namespace Phyber {
 
 namespace Renderer2d_cpu {
     extern color_precision_t *buffer;
-    extern void init(unsigned int width, unsigned int height, bool resizable);
-    extern void render();
+    extern bool init(unsigned int width, unsigned int height);
+    extern bool render();
     extern void deinit();
 }
 

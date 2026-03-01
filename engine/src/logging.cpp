@@ -1,5 +1,10 @@
 #include "phyber/logging.h"
 
+#include <cstdarg>
+#include <stdarg.h>
+#include <stdio.h>
+#include <time.h>
+
 using namespace Phyber::Log;
 
 #define ANSI_BLACK "\e[0;30m"
@@ -70,7 +75,7 @@ void Phyber::Log::printf_impl(Level level, const char *file, unsigned int line, 
     fputs(file, stdout);
     printf(":%u (", line);
     fputs(timefmt, stdout);
-    fputs(") -> ", stdout);
+    fputs(") " ANSI_PURPLE "->" ANSI_RESET " ", stdout);
     vprintf(format, args);
     putchar('\n');
 
