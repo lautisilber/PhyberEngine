@@ -1,5 +1,7 @@
 project(phyber_engine)
 
+set(BUILD_SHARED_LIBS ON)
+
 set(SDL_TESTS OFF)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vendor/SDL")
 
@@ -39,9 +41,18 @@ if(PHYBER_TESTS)
         Catch2::Catch2WithMain
     )
 
-    add_executable(phyber_engine_sdl_test "${CMAKE_CURRENT_SOURCE_DIR}/tests/sdl_test.cpp")
-    target_link_libraries(phyber_engine_sdl_test PRIVATE
+    add_executable(phyber_engine_logging_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/logging_tests.cpp")
+    target_link_libraries(phyber_engine_logging_tests PRIVATE
         phyber_engine
+    )
+
+    add_executable(phyber_engine_sdl_test_triangle "${CMAKE_CURRENT_SOURCE_DIR}/tests/sdl_test_triangle.cpp")
+    target_link_libraries(phyber_engine_sdl_test_triangle PRIVATE
+        SDL3::SDL3
+    )
+
+    add_executable(phyber_engine_sdl_test_buffer "${CMAKE_CURRENT_SOURCE_DIR}/tests/sdl_test_buffer.cpp")
+    target_link_libraries(phyber_engine_sdl_test_buffer PRIVATE
         SDL3::SDL3
     )
 endif()
