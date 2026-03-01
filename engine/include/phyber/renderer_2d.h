@@ -25,30 +25,37 @@
 
 namespace Phyber {
 
-class Renderer2d {
-private:
-    bool buffer_side = false;
-    GameObject2d gos[PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS];
-    bool gos_active[PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS];
+namespace Renderer2d_cpu {
+    extern color_precision_t *buffer;
+    extern void init(unsigned int width, unsigned int height, bool resizable);
+    extern void render();
+    extern void deinit();
+}
 
-public:
-    typedef color_precision_t* buffer_t;
-    Renderer2d();
+// class Renderer2d {
+// private:
+//     bool buffer_side = false;
+//     GameObject2d gos[PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS];
+//     bool gos_active[PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS];
 
-    GameObject2d *create_game_object();
-    GameObject2d *get_game_object(size_t n);
-    bool delete_game_object(size_t n);
-    bool delete_game_object(GameObject2d *ptr);
+// public:
+//     typedef color_precision_t* buffer_t;
+//     Renderer2d();
 
-    void clear_buffer(buffer_t buffer, size_t width, size_t height);
-    void fill_buffer(buffer_t buffer, size_t width, size_t height, color_precision_t r, color_precision_t g, color_precision_t b, color_precision_t a);
-    void render(buffer_t buffer, size_t width, size_t height);
-    #ifndef PHYBER_ENGINE_NO_2D_DEFAULT_BUFFER
-    void clear_buffer();
-    void fill_buffer(color_precision_t r, color_precision_t g, color_precision_t b, color_precision_t a);
-    void render();
-    #endif
-};
+//     GameObject2d *create_game_object();
+//     GameObject2d *get_game_object(size_t n);
+//     bool delete_game_object(size_t n);
+//     bool delete_game_object(GameObject2d *ptr);
+
+//     void clear_buffer(buffer_t buffer, size_t width, size_t height);
+//     void fill_buffer(buffer_t buffer, size_t width, size_t height, color_precision_t r, color_precision_t g, color_precision_t b, color_precision_t a);
+//     void render(buffer_t buffer, size_t width, size_t height);
+//     #ifndef PHYBER_ENGINE_NO_2D_DEFAULT_BUFFER
+//     void clear_buffer();
+//     void fill_buffer(color_precision_t r, color_precision_t g, color_precision_t b, color_precision_t a);
+//     void render();
+//     #endif
+// };
 
 }
 

@@ -19,9 +19,9 @@ struct Vertex
 // a list of vertices
 static Vertex vertices[]
 {
-    {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},     // top vertex
-    {-0.5f, -0.5f, 0.0f, 1.0f, 1.0f, 0.0f, 1.0f},   // bottom left vertex
-    {0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f}     // bottom right vertex
+    {0.0f, 0.5f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f},     // top vertex
+    {-0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f},   // bottom left vertex
+    {0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f}     // bottom right vertex
 };
 
 SDL_Window* window;
@@ -41,7 +41,7 @@ SDL_GPUGraphicsPipeline* graphicsPipeline;
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
     // get shaders' directory
-    const fs::path shaders_dir = (fs::path(__FILE__).parent_path() / ".." / "shaders").lexically_normal();
+    const fs::path shaders_dir = (fs::path(__FILE__).parent_path() / ".." / "shaders" / "simple").lexically_normal();
     const std::string vert_shader_src = shaders_dir / "simple.vert" SHADER_FORMAT_EXTENSION;
     const std::string frag_shader_src = shaders_dir / "simple.frag" SHADER_FORMAT_EXTENSION;
 
