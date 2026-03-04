@@ -7,9 +7,10 @@ bool Phyber::poll_event(Phyber::Event &event) {
         return false;
     }
 
-    // sdl_event.
+    // sdl_event
     switch (sdl_event.type) {
     case SDL_EventType::SDL_EVENT_QUIT:
+    case SDL_EventType::SDL_EVENT_WINDOW_CLOSE_REQUESTED:
         event.type = Phyber::EventType::QUIT_EVENT;
         break;
     case SDL_EventType::SDL_EVENT_KEY_DOWN:

@@ -60,4 +60,9 @@ if(PHYBER_TESTS)
     target_link_libraries(phyber_engine_sdl_test_buffer PRIVATE
         SDL3::SDL3
     )
+
+    add_executable(phyber_engine_sdl_test_events "${CMAKE_CURRENT_SOURCE_DIR}/tests/sdl_test_events.cpp")
+    target_link_libraries(phyber_engine_sdl_test_events PRIVATE
+        SDL3::SDL3
+    )
 endif()
