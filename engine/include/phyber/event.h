@@ -692,6 +692,8 @@ struct Event {
         MouseButtonEvent mouse_button;
         MouseWheelEvent mouse_wheel;
     };
+
+    inline bool is_quit() const { return type == EventType::QUIT_EVENT; }
 };
 
 extern bool poll_event(Event &event);

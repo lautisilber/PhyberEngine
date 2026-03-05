@@ -4,20 +4,6 @@
 #include "phyber/common_2d.h"
 #include "phyber/defs/global_defines.h"
 
-
-#ifndef PHYBER_ENGINE_NO_2D_DEFAULT_BUFFER
-    #ifndef PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH
-    #define PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH 256
-    #endif
-
-    #ifndef PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT
-    #define PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT 256
-    #endif
-#else
-    #define PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH 0
-    #define PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT 0
-#endif
-
 #ifndef PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS
 #define PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS 256
 #endif
@@ -28,7 +14,7 @@ namespace Renderer2d_cpu {
     extern color_precision_t *buffer;
     extern bool init(unsigned int width, unsigned int height);
     extern bool render();
-    extern void deinit();
+    extern void destroy();
 }
 
 // class Renderer2d {

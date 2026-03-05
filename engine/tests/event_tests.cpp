@@ -56,7 +56,7 @@ int main() {
     bool running = true;
     while (running) {
         while (Phyber::poll_event(event)) {
-            if (event.type == Phyber::EventType::QUIT_EVENT) {
+            if (event.is_quit()) {
                 PHYBER_LOG_INFO("Event: Quit");
                 running = false;
             } else if (event.type == Phyber::EventType::KEYBOARD) {
@@ -109,5 +109,5 @@ int main() {
     }
 
 
-    Renderer2d_cpu::deinit();
+    Renderer2d_cpu::destroy();
 }

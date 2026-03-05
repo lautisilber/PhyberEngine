@@ -55,7 +55,7 @@ bool Phyber::Renderer2d_cpu::init(unsigned int width, unsigned int height) {
     return true;
 
     error:
-    deinit();
+    destroy();
     return false;
 }
 
@@ -90,7 +90,7 @@ bool Phyber::Renderer2d_cpu::render() {
 
 
 
-void Phyber::Renderer2d_cpu::deinit() {
+void Phyber::Renderer2d_cpu::destroy() {
     if (buffer)
         free(buffer);
 
