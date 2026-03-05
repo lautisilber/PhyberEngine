@@ -7,7 +7,8 @@ namespace Phyber {
 
 typedef uint32_t EventType_t;
 enum EventType : EventType_t {
-    KEYBOARD, MOUSE_MOTION, MOUSE_BUTTON, MOUSE_WHEEL, QUIT_EVENT, UNSUPPORTED
+    UNSUPPORTED = 0,
+    KEYBOARD, MOUSE_MOTION, MOUSE_BUTTON, MOUSE_WHEEL, QUIT_EVENT
 };
 
 
@@ -631,6 +632,8 @@ struct KeyboardEvent {
         PhysicalKey physical_key; /**< the physical keyboard key affected */
         VirtualKey virtual_key;   /**< the virtual keyboard key affected */
         KeyModifier key_modifier; /**< curren key modifiers */
+
+        const char *get_key_name() const;
     };
 
     KeySymbol key;
@@ -638,7 +641,7 @@ struct KeyboardEvent {
     bool repeat;              /**< Non-zero if this is a key repeat */
 };
 
-typedef uint8_t MouseButtonFlags_t;
+typedef uint32_t MouseButtonFlags_t;
 enum MouseButtonFlags : MouseButtonFlags_t {
     BUTTON_LEFT     = 1,
     BUTTON_MIDDLE   = 2,
@@ -648,15 +651,21 @@ enum MouseButtonFlags : MouseButtonFlags_t {
 };
 
 struct MouseMotionEvent {
-    MouseButtonFlags_t button_state; /**< The mouse button state */
+    MouseButtonFlags_t button_state; /**< The mouse button state (bitmask) */
     float x, y, dx, dy;
+
+    bool is_button_left() const;
+    bool is_button_middle() const;
+    bool is_button_right() const;
+    bool is_button_x1() const;
+    bool is_button_x2() const;
 };
 
 struct MouseButtonEvent {
-    MouseButtonFlags_t button; /**< The mouse button index */
-    bool down;                 /**< true if the button is pressed */
-    uint8_t clicks;             /**< 1 for single-click, 2 for double-click, etc. */
-    float x, y;                /**< X, Y coordinates, relative to window */
+    MouseButtonFlags button;  /**< button index */
+    bool down;                /**< true if the button is pressed */
+    uint8_t clicks;           /**< 1 for single-click, 2 for double-click, etc. */
+    float x, y;               /**< X, Y coordinates, relative to window */
 };
 
 struct MouseWheelEvent {
@@ -674,13 +683,15 @@ struct MouseWheelEvent {
 };
 
 
-union Event {
+struct Event {
     EventType_t type;
 
-    KeyboardEvent keyboard;
-    MouseMotionEvent mouse_motion;
-    MouseButtonEvent mouse_button;
-    MouseWheelEvent mouse_wheel;
+    union {
+        KeyboardEvent keyboard;
+        MouseMotionEvent mouse_motion;
+        MouseButtonEvent mouse_button;
+        MouseWheelEvent mouse_wheel;
+    };
 };
 
 extern bool poll_event(Event &event);

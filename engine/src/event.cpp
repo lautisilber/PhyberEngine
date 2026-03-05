@@ -1,4 +1,5 @@
 #include "phyber/event.h"
+#include "phyber/logging.h"
 #include <SDL3/SDL.h>
 
 bool Phyber::poll_event(Phyber::Event &event) {
@@ -33,7 +34,7 @@ bool Phyber::poll_event(Phyber::Event &event) {
     case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_DOWN:
     case SDL_EventType::SDL_EVENT_MOUSE_BUTTON_UP:
         event.type = Phyber::EventType::MOUSE_BUTTON;
-        event.mouse_button.button = sdl_event.button.button;
+        event.mouse_button.button = static_cast<Phyber::MouseButtonFlags>(sdl_event.button.button);
         event.mouse_button.down = sdl_event.button.down;
         event.mouse_button.clicks = sdl_event.button.clicks;
         event.mouse_button.x = sdl_event.button.x;
@@ -50,8 +51,35 @@ bool Phyber::poll_event(Phyber::Event &event) {
         event.mouse_wheel.integer_y = sdl_event.wheel.integer_y;
         break;
     default:
+        event.type = Phyber::EventType::UNSUPPORTED;
         break;
     };
 
     return true;
+}
+
+const char *Phyber::KeyboardEvent::KeySymbol::get_key_name() const {
+    SDL_Keycode sdl_virtual_key = static_cast<SDL_Keycode>(virtual_key);
+    return SDL_GetKeyName(sdl_virtual_key);
+}
+
+
+bool Phyber::MouseMotionEvent::is_button_left() const {
+    return SDL_BUTTON_LMASK & button_state;
+}
+
+bool Phyber::MouseMotionEvent::is_button_middle() const {
+    return SDL_BUTTON_MMASK & button_state;
+}
+
+bool Phyber::MouseMotionEvent::is_button_right() const {
+    return SDL_BUTTON_RMASK & button_state;
+}
+
+bool Phyber::MouseMotionEvent::is_button_x1() const {
+    return SDL_BUTTON_X1MASK & button_state;
+}
+
+bool Phyber::MouseMotionEvent::is_button_x2() const {
+    return SDL_BUTTON_X2MASK & button_state;
 }

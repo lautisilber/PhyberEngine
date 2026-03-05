@@ -46,8 +46,8 @@ if(PHYBER_TESTS)
         phyber_engine
     )
 
-    add_executable(phyber_engine_renderer_2d_cpu_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/renderer_2d_cpu_tests.cpp")
-    target_link_libraries(phyber_engine_renderer_2d_cpu_tests PRIVATE
+    add_executable(phyber_engine_event_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/event_tests.cpp")
+    target_link_libraries(phyber_engine_event_tests PRIVATE
         phyber_engine
     )
 
