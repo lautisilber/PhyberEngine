@@ -25,6 +25,10 @@ namespace Phyber {
 // implementation for trivially copiable types
 template <typename T>
 class DynamicArray {
+    static_assert(std::is_default_constructible<T>::value,
+                      "T must be default constructible");
+    static_assert(std::is_move_constructible<T>::value || std::is_trivially_copyable<T>::value,
+                  "T must be move constructible or trivially copyable");
 private:
     T *_array = nullptr;
     size_t _size = 0;
