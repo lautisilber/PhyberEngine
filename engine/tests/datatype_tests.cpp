@@ -5,23 +5,23 @@
 
 #include "phyber/utils/datatypes.h"
 
-TEST_CASE("DynamicArray", "[DynamicArray]") {
+TEST_CASE("DynamicArray trivially-copiable type", "[DynamicArray]") {
     SECTION("DynamicArray default construction") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         CHECK(arr.size() == 0);
         CHECK(arr.capacity() == 0);
     }
 
     SECTION("DynamicArray custom capacity") {
-        DynamicArray<int> arr(10);
+        Phyber::DynamicArray<int> arr(10);
 
         CHECK(arr.size() == 0);
         CHECK(arr.capacity() == 10);
     }
 
     SECTION("push_back increases size") {
-        DynamicArray<int> arr(2);
+        Phyber::DynamicArray<int> arr(2);
 
         arr.push_back(1);
         arr.push_back(2);
@@ -32,7 +32,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("push_back triggers growth") {
-        DynamicArray<int> arr(1);
+        Phyber::DynamicArray<int> arr(1);
 
         arr.push_back(10);
         size_t old_capacity = arr.capacity();
@@ -45,7 +45,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("insert at beginning") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(2);
         arr.push_back(3);
@@ -59,7 +59,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("insert in middle") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
         arr.push_back(3);
@@ -73,7 +73,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("insert at end") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
         arr.insert(1, 2);
@@ -83,7 +83,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("erase middle element") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
         arr.push_back(2);
@@ -97,7 +97,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("erase last element") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
         arr.push_back(2);
@@ -109,7 +109,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("resize larger") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
         arr.resize(5);
@@ -123,7 +123,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("resize smaller") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         for (int i = 0; i < 5; ++i)
             arr.push_back(i);
@@ -136,7 +136,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("clear resets size") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
         arr.push_back(2);
@@ -148,7 +148,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("shrink_to_fit reduces capacity") {
-        DynamicArray<int> arr(10);
+        Phyber::DynamicArray<int> arr(10);
 
         arr.push_back(1);
         arr.push_back(2);
@@ -159,19 +159,19 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("out of bounds insert throws") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         CHECK_THROWS(arr.insert(1, 5));
     }
 
     SECTION("out of bounds erase throws") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         CHECK_THROWS(arr.erase(0));
     }
 
     SECTION("operator[] read access") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(10);
         arr.push_back(20);
@@ -183,7 +183,7 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("operator[] write access") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
         arr.push_back(2);
@@ -196,19 +196,19 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("operator[] const access") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(5);
         arr.push_back(6);
 
-        const DynamicArray<int>& cref = arr;
+        const Phyber::DynamicArray<int>& cref = arr;
 
         CHECK(cref[0] == 5);
         CHECK(cref[1] == 6);
     }
 
     SECTION("at() write access") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
         arr.push_back(2);
@@ -221,19 +221,19 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("at() const access") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(3);
         arr.push_back(4);
 
-        const DynamicArray<int>& cref = arr;
+        const Phyber::DynamicArray<int>& cref = arr;
 
         CHECK(cref.at(0) == 3);
         CHECK(cref.at(1) == 4);
     }
 
     SECTION("at() throws on out-of-bounds read") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
 
@@ -242,10 +242,144 @@ TEST_CASE("DynamicArray", "[DynamicArray]") {
     }
 
     SECTION("at() throws on out-of-bounds write") {
-        DynamicArray<int> arr;
+        Phyber::DynamicArray<int> arr;
 
         arr.push_back(1);
 
         CHECK_THROWS_AS(arr.at(2) = 5, std::out_of_range);
+    }
+}
+
+struct Track {
+    static int constructions;
+    static int destructions;
+    static int copies;
+    static int moves;
+
+    int value;
+
+    Track(int v = 0) : value(v) { ++constructions; }
+    Track(const Track &other) : value(other.value) { ++constructions; ++copies; }
+    Track(Track &&other) noexcept : value(other.value) { ++constructions; ++moves; other.value = 0; }
+    ~Track() { ++destructions; }
+
+    Track &operator=(const Track &other) { value = other.value; ++copies; return *this; }
+    Track &operator=(Track &&other) noexcept { value = other.value; other.value = 0; ++moves; return *this; }
+
+    bool operator==(const Track &other) const { return value == other.value; }
+
+    static void reset_counters() {
+        constructions = 0;
+        destructions = 0;
+        copies = 0;
+        moves = 0;
+    }
+};
+// initialize static counters
+int Track::constructions = 0;
+int Track::destructions = 0;
+int Track::copies = 0;
+int Track::moves = 0;
+
+TEST_CASE("DynamicArray non-trivially copyable", "[DynamicArray]") {
+    SECTION("push_back and move semantics") {
+        Track::reset_counters();
+        {
+            Phyber::DynamicArray<Track> arr;
+            arr.push_back(Track(1));
+            arr.push_back(Track(2));
+
+            CHECK(arr.size() == 2);
+            CHECK(arr[0].value == 1);
+            CHECK(arr[1].value == 2);
+
+            // Cannot check constructions == destructions yet, temporaries still exist
+        }
+
+        // Array is destroyed here, temporaries too
+        CHECK(Track::constructions == Track::destructions);
+    }
+
+    SECTION("insert at middle with rvalue") {
+        Track::reset_counters();
+        {
+            Phyber::DynamicArray<Track> arr;
+
+            arr.push_back(Track(1));
+            arr.push_back(Track(3));
+
+            arr.insert(1, Track(2));
+
+            CHECK(arr.size() == 3);
+            CHECK(arr[0].value == 1);
+            CHECK(arr[1].value == 2);
+            CHECK(arr[2].value == 3);
+        }
+
+        CHECK(Track::destructions == Track::constructions);
+    }
+
+    SECTION("erase middle element") {
+        Track::reset_counters();
+        {
+            Phyber::DynamicArray<Track> arr;
+            arr.push_back(Track(1));
+            arr.push_back(Track(2));
+            arr.push_back(Track(3));
+
+            arr.erase(1);
+
+            CHECK(arr.size() == 2);
+            CHECK(arr[0].value == 1);
+            CHECK(arr[1].value == 3);
+        }
+
+        CHECK(Track::destructions == Track::constructions);
+    }
+
+    SECTION("resize larger and smaller") {
+        Track::reset_counters();
+        {
+            Phyber::DynamicArray<Track> arr;
+            arr.push_back(Track(1));
+            arr.resize(5);
+
+            CHECK(arr.size() == 5);
+            CHECK(arr[0].value == 1);
+
+            arr.resize(2);
+            CHECK(arr.size() == 2);
+            CHECK(arr[0].value == 1);
+            CHECK(arr[1].value == 0);
+        }
+
+        CHECK(Track::destructions == Track::constructions);
+    }
+
+    SECTION("clear destroys elements") {
+        Track::reset_counters();
+        {
+            Phyber::DynamicArray<Track> arr;
+            arr.push_back(Track(1));
+            arr.push_back(Track(2));
+
+            arr.clear();
+            CHECK(arr.size() == 0);
+        }
+        CHECK(Track::destructions == Track::constructions);
+    }
+
+    SECTION("pop_back destroys last element") {
+        Track::reset_counters();
+        {
+            Phyber::DynamicArray<Track> arr;
+            arr.push_back(Track(1));
+            arr.push_back(Track(2));
+
+            arr.pop_back();
+            CHECK(arr.size() == 1);
+            CHECK(arr[0].value == 1);
+        }
+        CHECK(Track::destructions == Track::constructions);
     }
 }
