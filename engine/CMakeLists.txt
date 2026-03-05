@@ -41,6 +41,13 @@ if(PHYBER_TESTS)
         Catch2::Catch2WithMain
     )
 
+    add_executable(phyber_engine_datatype_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/datatype_tests.cpp")
+    target_link_libraries(phyber_engine_datatype_tests PRIVATE
+        phyber_engine
+        # thank you https://arainablog.tistory.com/750
+        Catch2::Catch2WithMain
+    )
+
     add_executable(phyber_engine_logging_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/logging_tests.cpp")
     target_link_libraries(phyber_engine_logging_tests PRIVATE
         phyber_engine
