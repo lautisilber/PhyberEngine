@@ -5,7 +5,7 @@ set(BUILD_SHARED_LIBS ON)
 set(SDL_TESTS OFF)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vendor/SDL")
 
-file(GLOB SRC_FILES "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp")
+file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp")
 add_library(phyber_engine STATIC
     ${SRC_FILES}
     # "${CMAKE_CURRENT_LIST_DIR}/src/math.cpp"

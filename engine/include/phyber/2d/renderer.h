@@ -1,7 +1,7 @@
 #ifndef PHYBER_ENGINE_RENDERER_2D_H
 #define PHYBER_ENGINE_RENDERER_2D_H
 
-#include "phyber/common_2d.h"
+#include "phyber/2d/common.h"
 #include "phyber/defs/global_defines.h"
 
 #ifndef PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS

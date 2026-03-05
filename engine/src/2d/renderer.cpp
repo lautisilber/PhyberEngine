@@ -1,5 +1,5 @@
-#include "phyber/renderer_2d.h"
-#include "phyber/common_2d.h"
+#include "phyber/2d/renderer.h"
+#include "phyber/2d/common.h"
 #include "phyber/math.h"
 #include "phyber/logging.h"
 

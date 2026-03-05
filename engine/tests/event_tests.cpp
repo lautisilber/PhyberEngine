@@ -1,4 +1,4 @@
-#include "phyber/renderer_2d.h"
+#include "phyber/2d/renderer.h"
 #include "phyber/event.h"
 #include "phyber/logging.h"
 

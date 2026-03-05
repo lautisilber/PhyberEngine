@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "defs/global_defines.h"
+#include "phyber/defs/global_defines.h"
 #include "phyber/math.h"
 #include "phyber/defs/global_defines.h"
 

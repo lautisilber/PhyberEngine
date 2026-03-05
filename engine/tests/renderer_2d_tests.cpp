@@ -1,5 +1,5 @@
 #include "phyber/event.h"
-#include "phyber/renderer_2d.h"
+#include "phyber/2d/renderer.h"
 
 int main() {
     Phyber::Renderer2d_cpu::init(500, 400);
