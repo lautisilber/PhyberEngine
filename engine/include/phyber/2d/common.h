@@ -23,11 +23,32 @@ struct Sprite {
     Sprite(color_precision_t *pixels, size_t width, size_t height, int center_x, int center_y);
     ~Sprite();
 
+    void load_png(const char *fname);
     void load_pixels(color_precision_t *pixels, size_t width, size_t height);
     void reset();
 };
 
-struct Transform2d {
+struct Rect {
+    float top_left, top_right, bottom_left, bottom_right;
+};
+
+struct Oval {
+    float radius_h, radius_v;
+};
+
+struct RectPrimitive : Rect {
+    color_precision_t color;
+};
+
+struct OvalPrimitive : Rect {
+    color_precision_t color;
+};
+
+enum GameObject2DType {
+    GO2D_RECT, GO2D_OVAL, GO2D_SPRITE
+};
+
+struct Transform2D {
     glm::vec3 pos; // cartesian
     float rot; // rotation in z axis
     glm::vec2 scale;
@@ -35,25 +56,41 @@ struct Transform2d {
     void reset();
 };
 
-struct GameObject2d {
-    Transform2d transform;
-    Sprite sprite;
+struct GameObject2D {
+    Transform2D transform;
+
+    GameObject2DType type;
+    union {
+        RectPrimitive rect;
+        OvalPrimitive oval;
+        Sprite sprite;
+    };
 
     void reset();
 };
 
-struct Collider2dSquare {
-    float top, left, bottom, right;
+enum Collider2DShapeType {
+    CO2D_RECT, CO2D_OVAL
 };
 
-// typedef struct {
-//     float radius;
-// } PhyberCollider2DCirlce;
+struct Collider2DRect: Rect {
+};
 
-// TODO: figure out how to have multiple collider types
+struct Collider2DOval: Oval {
+};
+
+struct Collider2D {
+    Collider2DShapeType shape_type;
+    union {
+        Collider2DRect rect;
+        Collider2DOval oval;
+    };
+};
+
 struct PhyberRigidBodyStatic2D {
-    GameObject2d go;
-    Collider2dSquare collider;
+    GameObject2D go;
+
+    Collider2D collider;
     float collider_plasticity;
 };
 

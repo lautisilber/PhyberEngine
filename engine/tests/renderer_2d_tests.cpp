@@ -2,7 +2,7 @@
 #include "phyber/2d/renderer.h"
 
 int main() {
-    Phyber::Renderer2d_cpu::init(500, 400);
+    Phyber::Renderer2D_cpu::init(500, 400);
 
     bool running = true;
     Phyber::Event event;
@@ -14,5 +14,5 @@ int main() {
 
     }
 
-    Phyber::Renderer2d_cpu::destroy();
+    Phyber::Renderer2D_cpu::destroy();
 }

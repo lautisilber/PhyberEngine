@@ -50,7 +50,7 @@ bool mouse_motion_timer() {
 }
 
 int main() {
-    Renderer2d_cpu::init(500, 400);
+    Renderer2D_cpu::init(500, 400);
 
     Phyber::Event event;
     bool running = true;
@@ -109,5 +109,5 @@ int main() {
     }
 
 
-    Renderer2d_cpu::destroy();
+    Renderer2D_cpu::destroy();
 }

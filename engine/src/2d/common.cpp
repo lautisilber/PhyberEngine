@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "stb/stb_image.h"
+
 using namespace Phyber;
 
 bool pixels_are_opaque(color_precision_t *pixels, size_t width, size_t height) {
@@ -24,6 +26,29 @@ void Sprite::load_pixels(color_precision_t *pixels, size_t width, size_t height)
     size_uv = glm::uvec2(width, height);
 }
 
+void Sprite::load_png(const char *fname) {
+    const uint8_t forced_channels = 4;
+    int width, height, channels;
+
+    unsigned char* data = stbi_load(fname, &width, &height, &channels, forced_channels); // force RGBA
+    if (!data) {
+        throw std::runtime_error("Failed to load image");
+    }
+
+    std::vector<color_precision_t> pixels(width * height);
+
+    for (int i = 0; i < width * height; ++i) {
+        pixels.push_back(
+            (data[i * forced_channels + 0] << 24) +
+            (data[i * forced_channels + 1] << 16) +
+            (data[i * forced_channels + 2] << 8) +
+            (data[i * forced_channels + 3])
+        );
+    }
+
+    load_pixels(pixels.data(), width, height);
+}
+
 
 Sprite::~Sprite() {
     if (pixels) {
@@ -40,13 +65,13 @@ void Sprite::reset() {
     transparent = false;
 }
 
-void Transform2d::reset() {
+void Transform2D::reset() {
     pos = glm::vec3(0,0,0);
     rot = 0;
     scale = glm::vec2(0,0);
 }
 
-void GameObject2d::reset() {
+void GameObject2D::reset() {
     transform.reset();
     sprite.reset();
 }
