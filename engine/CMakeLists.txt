@@ -5,6 +5,7 @@ set(BUILD_SHARED_LIBS ON)
 set(SDL_TESTS OFF)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vendor/SDL")
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vendor/glm")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vendor/stb")
 
 file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp")
 add_library(phyber_engine STATIC
@@ -24,6 +25,7 @@ target_include_directories(phyber_engine
 
 target_link_libraries(phyber_engine PRIVATE
     SDL3::SDL3
+    stb
 )
 target_link_libraries(phyber_engine PUBLIC
     glm::glm
