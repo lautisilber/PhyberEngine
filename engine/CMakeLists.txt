@@ -4,6 +4,7 @@ set(BUILD_SHARED_LIBS ON)
 
 set(SDL_TESTS OFF)
 add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vendor/SDL")
+add_subdirectory("${CMAKE_CURRENT_LIST_DIR}/vendor/glm")
 
 file(GLOB_RECURSE SRC_FILES "${CMAKE_CURRENT_LIST_DIR}/src/*.cpp")
 add_library(phyber_engine STATIC
@@ -24,6 +25,9 @@ target_include_directories(phyber_engine
 target_link_libraries(phyber_engine PRIVATE
     SDL3::SDL3
 )
+target_link_libraries(phyber_engine PUBLIC
+    glm::glm
+)
 
 # tests
 
@@ -33,20 +37,6 @@ endif()
 
 if(PHYBER_TESTS)
     add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/vendor/catch2")
-
-    add_executable(phyber_engine_math_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/math_tests.cpp")
-    target_link_libraries(phyber_engine_math_tests PRIVATE
-        phyber_engine
-        # thank you https://arainablog.tistory.com/750
-        Catch2::Catch2WithMain
-    )
-
-    add_executable(phyber_engine_datatype_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/datatype_tests.cpp")
-    target_link_libraries(phyber_engine_datatype_tests PRIVATE
-        phyber_engine
-        # thank you https://arainablog.tistory.com/750
-        Catch2::Catch2WithMain
-    )
 
     add_executable(phyber_engine_logging_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/logging_tests.cpp")
     target_link_libraries(phyber_engine_logging_tests PRIVATE

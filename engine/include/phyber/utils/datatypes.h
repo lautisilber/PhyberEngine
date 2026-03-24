@@ -8,7 +8,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <utility>
 #include <type_traits>
+
+#include "phyber/logging.h"
 
 namespace Phyber {
 
@@ -274,6 +277,16 @@ public:
     push_back(T &&v) {
         insert(_size, std::move(v));
     }
+
+    ENABLE_TRIVIALLY_SIMPLE(bool)
+    is_trivially_copiable_optimized() const {
+        return true;
+    }
+    ENABLE_NON_TRIVIALLY_SIMPLE(bool)
+    is_trivially_copiable_optimized() const {
+        return false;
+    }
+
 };
 
 #undef ENABLE_TRIVIALLY_SIMPLE

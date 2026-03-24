@@ -6,15 +6,18 @@
 #include <stdint.h>
 
 #include "phyber/defs/global_defines.h"
-#include "phyber/math.h"
 #include "phyber/defs/global_defines.h"
+
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
 namespace Phyber {
 
 struct Sprite {
     color_precision_t *pixels = nullptr; // r, g, b, a
-    Vec2Int size;
-    Vec2Int center;
+    glm::uvec2 size_uv;
+    glm::uvec2 center_uv;
+    bool transparent; // oposed to opaque
 
     Sprite() {}
     Sprite(color_precision_t *pixels, size_t width, size_t height, int center_x, int center_y);
@@ -25,9 +28,9 @@ struct Sprite {
 };
 
 struct Transform2d {
-    Vec3 pos; // cartesian
+    glm::vec3 pos; // cartesian
     float rot; // rotation in z axis
-    Vec2 scale;
+    glm::vec2 scale;
 
     void reset();
 };
@@ -56,7 +59,7 @@ struct PhyberRigidBodyStatic2D {
 
 struct PhyberRigidBodyDynamic2D {
     PhyberRigidBodyStatic2D static_rbody;
-    float vel_x, vel_y, vel_z;
+    glm::vec3 vel;
     float mass;
 };
 

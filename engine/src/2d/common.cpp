@@ -4,8 +4,15 @@
 
 using namespace Phyber;
 
-Sprite::Sprite(color_precision_t *pixels, size_t width, size_t height, int center_x, int center_y) {
+bool pixels_are_opaque(color_precision_t *pixels, size_t width, size_t height) {
+    for (size_t i = 0; i < width * height; ++i) {
+        if ((pixels[i] & COLOR_MASK_ALPHA) != 0x000000FF) { return false; }
+    }
+    return true;
+}
 
+Sprite::Sprite(color_precision_t *pixels, size_t width, size_t height, int center_x, int center_y) {
+    transparent = pixels_are_opaque(pixels, width, height);
 }
 
 void Sprite::load_pixels(color_precision_t *pixels, size_t width, size_t height) {
@@ -13,7 +20,8 @@ void Sprite::load_pixels(color_precision_t *pixels, size_t width, size_t height)
         free(pixels);
     }
     pixels = (color_precision_t *)malloc(width * height * 4 * sizeof(color_precision_t));
-    size = Phyber::Vec2Int(width, height);
+    transparent = pixels_are_opaque(pixels, width, height);
+    size_uv = glm::uvec2(width, height);
 }
 
 
@@ -27,14 +35,15 @@ void Sprite::reset() {
     if (pixels) {
         free(pixels);
     }
-    size = Vec2Int(0,0);
-    center = Vec2(0,0);
+    size_uv = glm::uvec2(0, 0);
+    center_uv = glm::uvec2(0, 0);
+    transparent = false;
 }
 
 void Transform2d::reset() {
-    pos = Vec3(0,0,0);
+    pos = glm::vec3(0,0,0);
     rot = 0;
-    scale = Vec2(0,0);
+    scale = glm::vec2(0,0);
 }
 
 void GameObject2d::reset() {
