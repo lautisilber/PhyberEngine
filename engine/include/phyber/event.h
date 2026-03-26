@@ -696,7 +696,9 @@ struct Event {
     inline bool is_quit() const { return type == EventType::QUIT_EVENT; }
 };
 
-extern bool poll_event(Event &event);
+typedef bool (*poll_event_t)(Event &event);
+extern poll_event_t poll_event;
+extern void set_poll_event_func(poll_event_t poll_event_f);
 
 }
 
