@@ -9,100 +9,16 @@
 #include <glm/ext/matrix_transform.hpp> // glm::translate, glm::rotate, glm::scale
 #include <glm/ext/matrix_clip_space.hpp> // glm::perspective
 
-#include <SDL3/SDL.h>
-
 #include <cmath>
 #include <stdexcept>
 #include <memory.h>
 #include <string.h>
 #include <vector>
 
+#include "backends/sdl/sdl_2D_cpu.h"
+
 color_precision_t *Phyber::Renderer2D_cpu::buffer = nullptr;
 unsigned int g_width = 0, g_height = 0;
-
-size_t sdl_buffer_pitch = 0;
-SDL_Window* sdl_window = nullptr;
-SDL_Renderer* sdl_renderer = nullptr;
-SDL_Texture* sdl_texture = nullptr;
-float sdl_dt_s = 1; // in s
-
-void sdl_destroy() {
-
-    SDL_DestroyTexture(sdl_texture);
-    SDL_DestroyRenderer(sdl_renderer);
-    SDL_DestroyWindow(sdl_window);
-}
-
-void sdl_init(color_precision_t *buffer, unsigned int width, unsigned int height) {
-    // create a sdl_window
-    sdl_window = SDL_CreateWindow("Hello, streaming sdl_texture!", width, height, 0);
-    if (!sdl_window) {
-        PHYBER_LOG_CRITICAL("Couldn't get sdl_window: %s", SDL_GetError());
-        goto error;
-    }
-
-    // get sdl_renderer
-    sdl_renderer = SDL_CreateRenderer(sdl_window, NULL);
-    if (!sdl_renderer) {
-        PHYBER_LOG_CRITICAL("Couldn't get sdl_renderer: %s", SDL_GetError());
-        goto error;
-    }
-
-    // create sdl_texture
-    sdl_texture = SDL_CreateTexture(
-        sdl_renderer,
-        SDL_PIXELFORMAT_RGBA8888,
-        SDL_TEXTUREACCESS_STREAMING,
-        width,
-        height
-    );
-    if (!sdl_texture) {
-        PHYBER_LOG_CRITICAL("Couldn't create sdl_texture: %s", SDL_GetError());
-        goto error;
-    }
-
-    return;
-
-    error:
-    sdl_destroy();
-    exit(1);
-}
-
-bool sdl_draw(color_precision_t *buffer, unsigned int width, unsigned int height) {
-    // update the sdl_texture
-    size_t buffer_pitch = sizeof(color_precision_t) * width;
-    if (!SDL_UpdateTexture(
-        sdl_texture,                 // the sdl_texture to update.
-        NULL,                    // an SDL_Rect structure representing the area to update, or NULL to update the entire sdl_texture.
-        buffer,                  // the raw pixel data in the format of the sdl_texture.
-        buffer_pitch // the number of bytes in a row of pixel data, including padding between lines.
-    )) {
-        PHYBER_LOG_ERROR("Couldn't update sdl_texture: ", SDL_GetError());
-        return false;
-    }
-
-    // SDL_RenderClear(sdl_renderer);
-    if (!SDL_RenderTexture(sdl_renderer, sdl_texture, NULL, NULL)) {
-        PHYBER_LOG_ERROR("Couldn't render sdl_texture: ", SDL_GetError());
-        return false;
-    }
-    if (!SDL_RenderPresent(sdl_renderer)) {
-        PHYBER_LOG_ERROR("Couldn't present rendered sdl_texture: ", SDL_GetError());
-        return false;
-    }
-
-    // update dt
-    static uint64_t last_ticks = 0;
-    uint64_t curr_ticks = SDL_GetTicks();
-    sdl_dt_s = (curr_ticks - last_ticks) / 1000.0f;
-    last_ticks = curr_ticks;
-
-    return true;
-}
-
-float sdl_dt() {
-    return sdl_dt_s;
-}
 
 Phyber::Renderer2D_cpu::init_backend_t b_init = nullptr;
 Phyber::Renderer2D_cpu::draw_backend_t b_draw = nullptr;
@@ -110,40 +26,21 @@ Phyber::Renderer2D_cpu::dt_backend_t b_dt = nullptr;
 Phyber::Renderer2D_cpu::destroy_backend_t b_destroy = nullptr;
 
 void Phyber::Renderer2D_cpu::init(unsigned int width, unsigned int height, init_backend_t init_f, draw_backend_t draw_f, dt_backend_t dt_f, destroy_backend_t destroy_f) {
-    if (
-        init_f == nullptr ||
-        draw_f == nullptr ||
-        destroy_f == nullptr
-    ) {
-        if (!(
-            init_f == nullptr &&
-            draw_f == nullptr &&
-            destroy_f == nullptr
-        )) {
-            throw std::runtime_error("If one backend function wasn't provided, then no backend function should be provided");
-        }
+    const bool no_overrides = init_f == nullptr || draw_f == nullptr || dt_f == nullptr || destroy_f == nullptr;
+    const bool all_overrides = init_f != nullptr && draw_f != nullptr && dt_f != nullptr && destroy_f != nullptr;
 
-        b_init = sdl_init;
-        b_draw = sdl_draw;
-        b_dt = sdl_dt;
-        b_destroy = sdl_destroy;
-    } else if (
-        init_f != nullptr ||
-        draw_f != nullptr ||
-        destroy_f != nullptr
-    ) {
-        if (!(
-            init_f != nullptr &&
-            draw_f != nullptr &&
-            destroy_f != nullptr
-        )) {
-            throw std::runtime_error("If one backend function was provided, then all backend functions should be provided");
-        }
-
+    if (no_overrides) {
+        b_init = Phyber::Renderer2D_cpu::SDL::init;
+        b_draw = Phyber::Renderer2D_cpu::SDL::draw;
+        b_dt = Phyber::Renderer2D_cpu::SDL::dt;
+        b_destroy = Phyber::Renderer2D_cpu::SDL::destroy;
+    } else if (all_overrides) {
         b_init = init_f;
         b_draw = draw_f;
         b_dt = dt_f;
         b_destroy = destroy_f;
+    } else {
+        throw std::runtime_error("If one backend function wasn't provided, then no backend function should be provided");
     }
 
     g_width = width;
@@ -162,8 +59,6 @@ void Phyber::Renderer2D_cpu::init(unsigned int width, unsigned int height, init_
 bool Phyber::Renderer2D_cpu::render() {
     return b_draw(buffer, g_width, g_height);
 }
-
-
 
 void Phyber::Renderer2D_cpu::destroy() {
     if (buffer)
