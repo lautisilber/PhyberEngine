@@ -1,5 +1,5 @@
-#ifndef SDL_RENDERER_2D_CPU_BACKEND
-#define SDL_RENDERER_2D_CPU_BACKEND
+#ifndef BACKEND_SDL_RENDERER_2D_CPU_h
+#define BACKEND_SDL_RENDERER_2D_CPU_h
 
 #include "phyber/2d/renderer.h"
 
@@ -14,4 +14,4 @@ namespace SDL {
 }
 }
 
-#endif /* SDL_RENDERER_2D_CPU_BACKEND */
+#endif /* BACKEND_SDL_RENDERER_2D_CPU_h */
