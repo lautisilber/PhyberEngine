@@ -60,11 +60,78 @@ bool Phyber::Renderer2D_cpu::render() {
     return b_draw(buffer, g_width, g_height);
 }
 
+float Phyber::Renderer2D_cpu::dt() {
+    return b_dt();
+}
+
 void Phyber::Renderer2D_cpu::destroy() {
     if (buffer)
         free(buffer);
 
     b_destroy();
+}
+
+static void local_to_world(const glm::vec3 &local_pos, const Phyber::Transform2D transform, glm::vec3 &world_pos) {
+    /*
+     * 1. Scale
+     * 2. Rotate
+     * 3. Translate
+     */
+
+    const c = cosf(transform.rot);
+    const s = sinf(transform.rot);
+    const scale_mat = glm::mat3x3(
+        transform.scale.x, 0, 0,
+        0, transform.scale.y, 0,
+        0, 0, 1
+    );
+    const rotate_mat = glm::mat3x3(
+        c, -s, 0,
+        s, c, 0,
+        0, 0, 1
+    );
+
+    world_pos = (rotate_mat * scale_mat * local_pos) + transform.pos;
+}
+
+static bool world_to_camera(const glm::vec3 &world_pos, const Phyber::Camera2D &camera, glm::vec2 & camera_pos) {
+    // returns true if in camera, false if outside camera
+    /*
+     * 1. Transform world to camera
+     * 2. Rotate
+     * 3. Scale
+     */
+
+    const float c = cosf(-camera.rot);
+    const float s = sinf(-camera.rot);
+    const glm::mat2x2 antirot(
+        c, -s,
+        s, c
+    );
+    const glm::mat3x3 antiscale(
+        1/camera.scale.x, 0,
+        0, 1/camera.scale.y
+    );
+
+    const glm::vec2 world_pos_2d(world_pos.x, world_pos.y);
+    camera_pos = antiscale * antirot * (world_pos_2d - glm::vec2(camera.pos.x, camera.pos.y));
+    return abs(camera_pos.x) > 1 || abs(camera_pos.y) > 1 || world_pos.z > camera.pos.z
+}
+
+static bool camera_to_buffer(const glm::vec2 &camera_pos, glm::uvec2 &buffer_uv, unsigned int w=g_width, unsigned int h=g_height) {
+    // returns false if outside the buffer
+    if (abs(camera_pos.x) > 1 || abs(camera_pos.y) > 1) { return false; }
+
+    buffer_uv = glm::uvec2(
+        roundf((-camera_pos.x + 1) * w / 2),
+        roundf((camera_pos.y + 1) * h / 2),
+    );
+    return true;
+}
+
+static void raster_go2D(const Phyber::GameObject2D &go, const Phyber::Camera2D &camera) {
+    // local space to world space
+
 }
 
 // color_precision_t _buffer_2d[2][PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH * PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT * 4];

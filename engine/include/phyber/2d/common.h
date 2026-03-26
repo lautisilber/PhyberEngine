@@ -38,10 +38,12 @@ struct Oval {
 
 struct RectPrimitive : Rect {
     color_precision_t color;
+    bool filled;
 };
 
 struct OvalPrimitive : Rect {
     color_precision_t color;
+    bool filled;
 };
 
 enum GameObject2DType {
@@ -98,6 +100,12 @@ struct PhyberRigidBodyDynamic2D {
     PhyberRigidBodyStatic2D static_rbody;
     glm::vec3 vel;
     float mass;
+};
+
+struct Camera2D {
+    glm::vec3 pos;
+    float rot; // rotation in z axis
+    glm::vec2 scale;
 };
 
 }
