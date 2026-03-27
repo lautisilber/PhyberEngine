@@ -50,22 +50,22 @@ bool mouse_motion_timer() {
 }
 
 int main() {
-    Renderer2D_cpu::init(500, 400);
+    Renderer2D::CPU::init(500, 400);
 
-    Phyber::Event event;
+    Event event;
     bool running = true;
     while (running) {
-        while (Phyber::poll_event(event)) {
+        while (poll_event(event)) {
             if (event.is_quit()) {
                 PHYBER_LOG_INFO("Event: Quit");
                 running = false;
-            } else if (event.type == Phyber::EventType::KEYBOARD) {
+            } else if (event.type == EventType::KEYBOARD) {
                 PHYBER_LOG_INFO("Event: Keyboard %s - down: %u, repeat: %u",
                     event.keyboard.key.get_key_name(),
                     event.keyboard.down,
                     event.keyboard.repeat
                 );
-            } else if (event.type == Phyber::EventType::MOUSE_MOTION) {
+            } else if (event.type == EventType::MOUSE_MOTION) {
                 static size_t n_buffered_mouse_motion_events = 0;
                 if (mouse_motion_timer()) {
                     PHYBER_LOG_INFO("Event: Mouse motion (%f, %f) %u%u%u%u%u | %lu buffered",
@@ -82,23 +82,23 @@ int main() {
                 } else {
                     ++n_buffered_mouse_motion_events;
                 }
-            } else if (event.type == Phyber::EventType::MOUSE_BUTTON) {
+            } else if (event.type == EventType::MOUSE_BUTTON) {
                 PHYBER_LOG_INFO("Event: Mouse button (%f, %f) %u%u%u%u%u - down: %u, n_clicks: %u",
                     event.mouse_button.x,
                     event.mouse_button.y,
-                    event.mouse_button.button == Phyber::MouseButtonFlags::BUTTON_LEFT,
-                    event.mouse_button.button == Phyber::MouseButtonFlags::BUTTON_MIDDLE,
-                    event.mouse_button.button == Phyber::MouseButtonFlags::BUTTON_RIGHT,
-                    event.mouse_button.button == Phyber::MouseButtonFlags::BUTTON_X1,
-                    event.mouse_button.button == Phyber::MouseButtonFlags::BUTTON_X2,
+                    event.mouse_button.button == MouseButtonFlags::BUTTON_LEFT,
+                    event.mouse_button.button == MouseButtonFlags::BUTTON_MIDDLE,
+                    event.mouse_button.button == MouseButtonFlags::BUTTON_RIGHT,
+                    event.mouse_button.button == MouseButtonFlags::BUTTON_X1,
+                    event.mouse_button.button == MouseButtonFlags::BUTTON_X2,
                     event.mouse_button.down,
                     event.mouse_button.clicks
                 );
-            } else if (event.type == Phyber::EventType::MOUSE_WHEEL) {
+            } else if (event.type == EventType::MOUSE_WHEEL) {
                 PHYBER_LOG_INFO("Event: Mouse wheel: scroll (%.2f, %.2f), direction %i, mouse coord (%f, %f), ticks (%i, %i)",
                     event.mouse_wheel.x,
                     event.mouse_wheel.y,
-                    event.mouse_wheel.direction == Phyber::MouseWheelEvent::Direction::FLIPPED,
+                    event.mouse_wheel.direction == MouseWheelEvent::Direction::FLIPPED,
                     event.mouse_wheel.mouse_x,
                     event.mouse_wheel.mouse_y,
                     event.mouse_wheel.integer_x,
@@ -109,5 +109,5 @@ int main() {
     }
 
 
-    Renderer2D_cpu::destroy();
+    Renderer2D::CPU::destroy();
 }

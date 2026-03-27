@@ -31,6 +31,17 @@ target_link_libraries(phyber_engine PUBLIC
     glm::glm
 )
 
+function(debug_flags target)
+    if (APPLE)
+        target_compile_options(${target} PRIVATE "-glldb")
+    else()
+        target_compile_options(${target} PRIVATE "-g")
+    endif()
+endfunction()
+
+# set_property(TARGET phyber_engine PROPERTY COMPILE_WARNING_AS_ERROR ON)
+debug_flags(phyber_engine)
+
 # tests
 
 if(NOT DEFINED PHYBER_TESTS)
@@ -50,10 +61,17 @@ if(PHYBER_TESTS)
         phyber_engine
     )
 
-    add_executable(phyber_engine_renderer_2d_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/renderer_2d_tests.cpp")
-    target_link_libraries(phyber_engine_renderer_2d_tests PRIVATE
+    add_executable(phyber_engine_renderer_2d_cpu_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/renderer_2d_cpu_tests.cpp")
+    target_link_libraries(phyber_engine_renderer_2d_cpu_tests PRIVATE
         phyber_engine
     )
+    debug_flags(phyber_engine_renderer_2d_cpu_tests)
+
+    add_executable(phyber_engine_renderer_2d_gpu_tests "${CMAKE_CURRENT_SOURCE_DIR}/tests/renderer_2d_gpu_tests.cpp")
+    target_link_libraries(phyber_engine_renderer_2d_gpu_tests PRIVATE
+        phyber_engine
+    )
+    debug_flags(phyber_engine_renderer_2d_gpu_tests)
 
     add_executable(phyber_engine_sdl_test_triangle "${CMAKE_CURRENT_SOURCE_DIR}/tests/sdl_test_triangle.cpp")
     target_link_libraries(phyber_engine_sdl_test_triangle PRIVATE

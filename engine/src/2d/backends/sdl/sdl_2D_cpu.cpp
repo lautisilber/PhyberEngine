@@ -11,14 +11,14 @@ SDL_Renderer* renderer = nullptr;
 SDL_Texture* texture = nullptr;
 float dt_s = 1; // in s
 
-void Phyber::Renderer2D_cpu::SDL::destroy() {
+void Phyber::Renderer2D::CPU::SDL::destroy() {
 
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 }
 
-void Phyber::Renderer2D_cpu::SDL::init(color_precision_t *buffer, unsigned int width, unsigned int height) {
+void Phyber::Renderer2D::CPU::SDL::init(color_precision_t *buffer, unsigned int width, unsigned int height) {
     // create a window
     window = SDL_CreateWindow("Hello, streaming texture!", width, height, 0);
     if (!window) {
@@ -49,11 +49,11 @@ void Phyber::Renderer2D_cpu::SDL::init(color_precision_t *buffer, unsigned int w
     return;
 
     error:
-    Phyber::Renderer2D_cpu::SDL::destroy();
+    Phyber::Renderer2D::CPU::SDL::destroy();
     exit(1);
 }
 
-bool Phyber::Renderer2D_cpu::SDL::draw(color_precision_t *buffer, unsigned int width, unsigned int height) {
+bool Phyber::Renderer2D::CPU::SDL::draw(color_precision_t *buffer, unsigned int width, unsigned int height) {
     // update the texture
     size_t buffer_pitch = sizeof(color_precision_t) * width;
     if (!SDL_UpdateTexture(
@@ -85,6 +85,6 @@ bool Phyber::Renderer2D_cpu::SDL::draw(color_precision_t *buffer, unsigned int w
     return true;
 }
 
-float Phyber::Renderer2D_cpu::SDL::dt() {
+float Phyber::Renderer2D::CPU::SDL::dt() {
     return dt_s;
 }

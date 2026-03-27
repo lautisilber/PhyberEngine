@@ -1,0 +1,9 @@
+[
+    {
+        "label": "Debug c++",
+        "adapter": "CodeLLDB",
+        "request": "launch",
+        "program": "$ZED_WORKTREE_ROOT/build/engine/phyber_engine_renderer_2d_tests",
+        "cwd": "$ZED_WORKTREE_ROOT",
+    },
+]

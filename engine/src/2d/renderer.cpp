@@ -10,91 +10,53 @@
 #include <glm/ext/matrix_clip_space.hpp> // glm::perspective
 
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 #include <memory.h>
 #include <string.h>
+#include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "backends/sdl/sdl_2D_cpu.h"
 
-color_precision_t *Phyber::Renderer2D_cpu::buffer = nullptr;
+color_precision_t *Phyber::Renderer2D::CPU::pixel_buffer = nullptr;
+z_buffer_precision_t *Phyber::Renderer2D::CPU::z_buffer = nullptr;
 unsigned int g_width = 0, g_height = 0;
+Phyber::Renderer2D::CPU::RasterizationQuality g_rasterization_quality = Phyber::Renderer2D::CPU::RasterizationQuality::SUBPIXEL_PRECISION;
 
-Phyber::Renderer2D_cpu::init_backend_t b_init = nullptr;
-Phyber::Renderer2D_cpu::draw_backend_t b_draw = nullptr;
-Phyber::Renderer2D_cpu::dt_backend_t b_dt = nullptr;
-Phyber::Renderer2D_cpu::destroy_backend_t b_destroy = nullptr;
+Phyber::Renderer2D::init_backend_t b_init = nullptr;
+Phyber::Renderer2D::draw_backend_t b_draw = nullptr;
+Phyber::Renderer2D::dt_backend_t b_dt = nullptr;
+Phyber::Renderer2D::destroy_backend_t b_destroy = nullptr;
 
-void Phyber::Renderer2D_cpu::init(unsigned int width, unsigned int height, init_backend_t init_f, draw_backend_t draw_f, dt_backend_t dt_f, destroy_backend_t destroy_f) {
-    const bool no_overrides = init_f == nullptr || draw_f == nullptr || dt_f == nullptr || destroy_f == nullptr;
-    const bool all_overrides = init_f != nullptr && draw_f != nullptr && dt_f != nullptr && destroy_f != nullptr;
+std::vector<Phyber::GameObject2D*> gos;
 
-    if (no_overrides) {
-        b_init = Phyber::Renderer2D_cpu::SDL::init;
-        b_draw = Phyber::Renderer2D_cpu::SDL::draw;
-        b_dt = Phyber::Renderer2D_cpu::SDL::dt;
-        b_destroy = Phyber::Renderer2D_cpu::SDL::destroy;
-    } else if (all_overrides) {
-        b_init = init_f;
-        b_draw = draw_f;
-        b_dt = dt_f;
-        b_destroy = destroy_f;
-    } else {
-        throw std::runtime_error("If one backend function wasn't provided, then no backend function should be provided");
-    }
+// render-specific functions
 
-    g_width = width;
-    g_height = height;
-    size_t buffer_pitch = sizeof(color_precision_t) * g_width;
-    buffer = (color_precision_t*)malloc(buffer_pitch * g_height);
-    if (!buffer) {
-        PHYBER_LOG_CRITICAL("Coudln't allocate screen buffer");
-        destroy();
-        exit(1);
-    }
-
-    b_init(buffer, g_width, g_height);
-}
-
-bool Phyber::Renderer2D_cpu::render() {
-    return b_draw(buffer, g_width, g_height);
-}
-
-float Phyber::Renderer2D_cpu::dt() {
-    return b_dt();
-}
-
-void Phyber::Renderer2D_cpu::destroy() {
-    if (buffer)
-        free(buffer);
-
-    b_destroy();
-}
-
-static void local_to_world(const glm::vec3 &local_pos, const Phyber::Transform2D transform, glm::vec3 &world_pos) {
+static void local_to_world(const glm::vec2 &local_pos, glm::vec3 &world_pos, const Phyber::Transform2D &transform) {
     /*
      * 1. Scale
      * 2. Rotate
      * 3. Translate
      */
 
-    const c = cosf(transform.rot);
-    const s = sinf(transform.rot);
-    const scale_mat = glm::mat3x3(
-        transform.scale.x, 0, 0,
-        0, transform.scale.y, 0,
-        0, 0, 1
+    const float c = cosf(transform.rot);
+    const float s = sinf(transform.rot);
+    const glm::mat2x2 scale_mat(
+        transform.scale.x, 0,
+        0, transform.scale.y
     );
-    const rotate_mat = glm::mat3x3(
-        c, -s, 0,
-        s, c, 0,
-        0, 0, 1
+    const glm::mat2x2 rotate_mat(
+        c, -s,
+        s, c
     );
 
-    world_pos = (rotate_mat * scale_mat * local_pos) + transform.pos;
+    const glm::vec2 temp = rotate_mat * scale_mat * local_pos;
+    world_pos = glm::vec3(temp.x + transform.pos.x, temp.y + transform.pos.y, transform.pos.y);
 }
 
-static bool world_to_camera(const glm::vec3 &world_pos, const Phyber::Camera2D &camera, glm::vec2 & camera_pos) {
+static bool world_to_camera(const glm::vec3 &world_pos, glm::vec2 & camera_pos, const Phyber::Camera2D &camera) {
     // returns true if in camera, false if outside camera
     /*
      * 1. Transform world to camera
@@ -108,171 +70,294 @@ static bool world_to_camera(const glm::vec3 &world_pos, const Phyber::Camera2D &
         c, -s,
         s, c
     );
-    const glm::mat3x3 antiscale(
-        1/camera.scale.x, 0,
-        0, 1/camera.scale.y
+    const glm::mat2x2 antiscale(
+        1/camera.view_size.x, 0,
+        0, 1/camera.view_size.y
     );
 
     const glm::vec2 world_pos_2d(world_pos.x, world_pos.y);
     camera_pos = antiscale * antirot * (world_pos_2d - glm::vec2(camera.pos.x, camera.pos.y));
-    return abs(camera_pos.x) > 1 || abs(camera_pos.y) > 1 || world_pos.z > camera.pos.z
+    return abs(camera_pos.x) > 1 || abs(camera_pos.y) > 1 || world_pos.z > camera.pos.z;
 }
 
-static bool camera_to_buffer(const glm::vec2 &camera_pos, glm::uvec2 &buffer_uv, unsigned int w=g_width, unsigned int h=g_height) {
-    // returns false if outside the buffer
-    if (abs(camera_pos.x) > 1 || abs(camera_pos.y) > 1) { return false; }
+static bool camera_to_buffer(const glm::vec2 &camera_pos, glm::vec2 &buffer_pos, unsigned int w=g_width, unsigned int h=g_height) {
+    buffer_pos.x = (camera_pos.x + 1) * w * 0.5;
+    buffer_pos.y = (camera_pos.y + 1) * h * 0.5;
+    return (buffer_pos.x < 0 || buffer_pos.x >= w || buffer_pos.y < 0 || buffer_pos.y >= h);
+}
 
-    buffer_uv = glm::uvec2(
-        roundf((-camera_pos.x + 1) * w / 2),
-        roundf((camera_pos.y + 1) * h / 2),
-    );
-    return true;
+static bool local_to_buffer(const glm::vec3 &local_pos, glm::vec2 &buffer_pos, const Phyber::Transform2D &transform, const Phyber::Camera2D &camera, unsigned int w=g_width, unsigned int h=g_height) {
+    glm::vec3 world_pos;
+    glm::vec2 camera_pos;
+
+    local_to_world(local_pos, world_pos, transform);
+    world_to_camera(world_pos, camera_pos, camera);
+    return camera_to_buffer(camera_pos, buffer_pos, w, h);
+}
+
+static void raster_line_to_buffer(const glm::ivec2 &a, const glm::ivec2 &b, z_buffer_precision_t z, color_precision_t color, unsigned int linewidth) {
+    // https://en.wikipedia.org/wiki/Line_drawing_algorithm
+    if (linewidth == 0) {
+        PHYBER_LOG_DEBUG("Trying to raster line with linewidth = 0");
+        return;
+    }
+
+    float x0 = a.x, x1 = b.x, y0 = a.y, y1 = b.y;
+    const bool steep = abs(y1 - y0) > abs(x1 - x0);
+    if (steep) {
+        std::swap(x0, y0);
+        std::swap(x1, y1);
+    }
+    if (x0 > x1) {
+        std::swap(x0, x1);
+        std::swap(y0, y1);
+    }
+
+    const float dx = x1 - x0;
+    const float dy = y1 - y0;
+
+    switch (g_rasterization_quality) {
+    case Phyber::Renderer2D::CPU::RasterizationQuality::SUBPIXEL_PRECISION: {
+        const float m = dy / dx;
+        if (linewidth == 1) {
+            size_t buffer_idx;
+            for (float x = x0; x <= x1; ++x) {
+                float y = m * (x - x0) + y0;
+                const int ix = roundf(x);
+                const int iy = roundf(y);
+
+                if (steep) {
+                    // check if pixel outside buffer
+                    if (iy < 0 || ix >= g_width || ix < 0 || iy >= g_height) { continue; }
+                    // check for zbuffer
+                    buffer_idx = iy + g_width * ix;
+                } else {
+                    // check if pixel outside buffer
+                    if (ix < 0 || ix >= g_width || iy < 0 || iy >= g_height) { continue; }
+                    // check for zbuffer
+                    buffer_idx = ix + g_width * iy;
+                }
+                if (Phyber::Renderer2D::CPU::z_buffer[buffer_idx] > z) { continue; }
+                Phyber::Renderer2D::CPU::pixel_buffer[buffer_idx] = color;
+            }
+        } else {
+            size_t buffer_idx;
+            for (float x = x0; x <= x1; ++x) {
+                float y = m * (x - x0) + y0;
+                const int ix = roundf(x);
+                const int iy = roundf(y);
+
+                if (steep) {
+                    // check if pixel outside buffer
+                    if (iy < 0 || ix >= g_width || ix < 0 || iy >= g_height) { continue; }
+                    // check for zbuffer
+                    buffer_idx = iy + g_width * ix;
+                } else {
+                    // check if pixel outside buffer
+                    if (ix < 0 || ix >= g_width || iy < 0 || iy >= g_height) { continue; }
+                    // check for zbuffer
+                    buffer_idx = ix + g_width * iy;
+                }
+                if (Phyber::Renderer2D::CPU::z_buffer[buffer_idx] > z) { continue; }
+                Phyber::Renderer2D::CPU::pixel_buffer[buffer_idx] = color;
+            }
+        }
+        break;
+    }
+    case Phyber::Renderer2D::CPU::RasterizationQuality::ANTI_ALIASING: {
+        // https://en.wikipedia.org/wiki/Xiaolin_Wu%27s_line_algorithm#Floating_Point_Implementation
+        auto plot = [&](int x, int y, float brightness, z_buffer_precision_t z, color_precision_t c) {
+            // plot the pixel at (x, y) with brightness c (where 0 <= c <= 1)
+            if (x < 0 || x >= g_width || y < 0 || y >= g_height) { return; }
+            const size_t buffer_idx = x + g_width * y;
+            if (Phyber::Renderer2D::CPU::z_buffer[buffer_idx] > z) { return; }
+
+            // map brightness [0-1] to curr max brightness
+            const color_precision_t new_brightness = static_cast<float>(c & COLOR_MASK_ALPHA) * brightness;
+            const color_precision_t new_color = c & (~COLOR_MASK_ALPHA) + new_brightness;
+            Phyber::Renderer2D::CPU::pixel_buffer[buffer_idx] = new_color;
+        };
+
+        // fractional part of x
+        auto fpart = [](float x) -> float {
+            return x - floorf(x);
+        };
+
+        auto rfpart = [&fpart](float x) -> float {
+            return 1 - fpart(x);
+        };
+
+        const float gradient = (dx == 0 ? 1.0 : dy/dx);
+
+        // handle first endpoint
+        float xend = floorf(x0);
+        float yend = y0 + gradient * (xend - x0);
+        float xgap = 1 - (x0 - xend);
+        int xpxl1 = xend; // this will be used in the main loop
+        int ypxl1 = floorf(yend);
+        if (steep) {
+            plot(ypxl1,   xpxl1, rfpart(yend) * xgap, z, color);
+            plot(ypxl1+1, xpxl1,  fpart(yend) * xgap, z, color);
+        } else {
+            plot(static_cast<int>(ypxl1), static_cast<int>(xpxl1),   rfpart(yend) * xgap, z, color);
+            plot(static_cast<int>(ypxl1), static_cast<int>(xpxl1+1),  fpart(yend) * xgap, z, color);
+        }
+        float intery = yend + gradient; // first y-intersection for the main loop
+
+        // handle second endpoint
+        xend = ceilf(x1);
+        yend = y1 + gradient * (xend - x1);
+        xgap = 1 - (xend - x1);
+        float xpxl2 = xend; //this will be used in the main loop
+        float ypxl2 = floorf(yend);
+        if (steep) {
+            plot(static_cast<int>(ypxl2)  , static_cast<int>(xpxl2), rfpart(yend) * xgap, z, color);
+            plot(static_cast<int>(ypxl2+1), static_cast<int>(xpxl2),  fpart(yend) * xgap, z, color);
+        } else {
+            plot(static_cast<int>(ypxl2), static_cast<int>(xpxl2),  rfpart(yend) * xgap, z, color);
+            plot(static_cast<int>(ypxl2), static_cast<int>(xpxl2+1), fpart(yend) * xgap, z, color);
+        }
+        if (steep) {
+            for (int x = xpxl1 + 1; x <= xpxl2 - 1; ++x) {
+                plot(floorf(intery)  , x, rfpart(intery), z, color);
+                plot(floorf(intery)+1, x,  fpart(intery), z, color);
+                intery += gradient;
+            }
+        } else {
+            for (int x = xpxl1 + 1; x <= xpxl2 - 1; ++x) {
+                plot(floorf(intery)+1, x, rfpart(intery), z, color);
+                plot(floorf(intery)  , x,  fpart(intery), z, color);
+                intery += gradient;
+            }
+        }
+        break;
+    }
+    default:
+        PHYBER_LOG_CRITICAL("Unreachable (%u)", g_rasterization_quality);
+        abort();
+    }
+}
+
+static void raster_rect_to_buffer(const glm::vec2 &top_left, const glm::vec2 &top_right, const glm::vec2 &bottom_right, const glm::vec2 &bottom_left, z_buffer_precision_t z, color_precision_t color, bool filled, float line_width) {
+    const glm::ivec2 i_top_left = top_left;
+    const glm::ivec2 i_top_right = top_right;
+    const glm::ivec2 i_bottom_right = bottom_right;
+    const glm::ivec2 i_bottom_left = bottom_left;
+    PHYBER_LOG_DEBUG("local: (%f, %f), (%f, %f)", top_left.x, top_left.y, bottom_right.x, bottom_right.y);
+    raster_line_to_buffer(i_top_left, i_top_right, z, color, line_width);
+    raster_line_to_buffer(i_top_right, i_bottom_right, z, color, line_width);
+    raster_line_to_buffer(i_bottom_right, i_bottom_left, z, color, line_width);
+    raster_line_to_buffer(i_bottom_left, i_top_left, z, color, line_width);
 }
 
 static void raster_go2D(const Phyber::GameObject2D &go, const Phyber::Camera2D &camera) {
-    // local space to world space
+    switch (go.type) {
+    case Phyber::GameObject2DType::GO2D_RECT: {
+        const glm::vec3 top_left_local = glm::vec3(go.rect.rect.top_left.x, go.rect.rect.top_left.y, 0);
+        const glm::vec3 bottom_right_local = glm::vec3(go.rect.rect.bottom_right.x, go.rect.rect.bottom_right.y, 0);
+        const glm::vec3 top_right_local = glm::vec3(bottom_right_local.x, top_left_local.y, 0);
+        const glm::vec3 bottom_left_local = glm::vec3(top_left_local.x, bottom_right_local.y, 0);
+        glm::vec2 top_left_buffer, bottom_right_buffer, top_right_buffer, bottom_left_buffer;
+        local_to_buffer(top_left_local, top_left_buffer, go.transform, camera, g_width, g_height);
+        local_to_buffer(top_right_local, top_right_buffer, go.transform, camera, g_width, g_height);
+        local_to_buffer(bottom_right_local, bottom_right_buffer, go.transform, camera, g_width, g_height);
+        local_to_buffer(bottom_left_local, bottom_left_buffer, go.transform, camera, g_width, g_height);
 
+        raster_rect_to_buffer(top_left_buffer, top_right_buffer, bottom_right_buffer, bottom_left_buffer, go.transform.pos.z, go.rect.primitive.color, go.rect.primitive.filled, go.rect.primitive.line_width);
+        break;
+    }
+    default:
+        PHYBER_LOG_DEBUG("Not implemented");
+        abort();
+    }
 }
 
-// color_precision_t _buffer_2d[2][PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH * PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT * 4];
+// exposed functions
 
-// Renderer2d::Renderer2d() {
-//     memset(gos_active, 0, PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS * sizeof(bool));
-// }
+void Phyber::Renderer2D::CPU::init(unsigned int width, unsigned int height, RasterizationQuality rasterization_quality, init_backend_t init_f, draw_backend_t draw_f, dt_backend_t dt_f, destroy_backend_t destroy_f) {
+    const bool no_overrides = init_f == nullptr || draw_f == nullptr || dt_f == nullptr || destroy_f == nullptr;
+    const bool all_overrides = init_f != nullptr && draw_f != nullptr && dt_f != nullptr && destroy_f != nullptr;
 
-// GameObject2d *Renderer2d::create_game_object() {
-//     for (
-//         bool *active_ptr = gos_active;
-//         active_ptr - gos_active < PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS;
-//         active_ptr++
-//     ) {
-//         if (!(*active_ptr)) {
-//             GameObject2d *go = &gos[active_ptr - gos_active];
-//             memset(go, 0, sizeof(GameObject2d));
-//             return go;
-//         }
-//     }
-//     return nullptr;
-// }
+    if (no_overrides) {
+        b_init = Phyber::Renderer2D::CPU::SDL::init;
+        b_draw = Phyber::Renderer2D::CPU::SDL::draw;
+        b_dt = Phyber::Renderer2D::CPU::SDL::dt;
+        b_destroy = Phyber::Renderer2D::CPU::SDL::destroy;
+    } else if (all_overrides) {
+        b_init = init_f;
+        b_draw = draw_f;
+        b_dt = dt_f;
+        b_destroy = destroy_f;
+    } else {
+        throw std::runtime_error("If one backend function wasn't provided, then no backend function should be provided");
+    }
 
-// GameObject2d *Renderer2d::get_game_object(size_t n) {
-//     if (
-//         n >= PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS ||
-//         !gos_active[n]
-//     ) {
-//         return nullptr;
-//     }
-//     return &gos[n];
-// }
+    g_rasterization_quality = rasterization_quality;
 
-// bool Renderer2d::delete_game_object(size_t n) {
-//     if (
-//         n >= PHYBER_ENGINE_RENDERER_2D_MAX_GAME_OBJECTS ||
-//         !gos_active[n]
-//     ) {
-//         return false;
-//     }
-//     gos_active[n] = 0;
-//     return true;
-// }
+    g_width = width;
+    g_height = height;
+    size_t buffer_pitch = sizeof(color_precision_t) * g_width;
+    Phyber::Renderer2D::CPU::pixel_buffer = (color_precision_t*)malloc(buffer_pitch * g_height);
+    if (!Phyber::Renderer2D::CPU::pixel_buffer) {
+        PHYBER_LOG_CRITICAL("Coudln't allocate pixel buffer");
+        destroy();
+        exit(1);
+    }
 
-// bool Renderer2d::delete_game_object(GameObject2d *ptr) {
-//     if (ptr < gos) return false;
-//     return delete_game_object(ptr - gos);
-// }
+    Phyber::Renderer2D::CPU::z_buffer = (z_buffer_precision_t*)malloc(g_width * g_height * sizeof(z_buffer_precision_t));
+    if (!Phyber::Renderer2D::CPU::z_buffer) {
+        PHYBER_LOG_CRITICAL("Coudln't allocate z buffer");
+        destroy();
+        exit(1);
+    }
 
-// void Renderer2d::clear_buffer(buffer_t buffer, size_t width, size_t height) {
-//     memset(buffer, 0, width * height * 4 * sizeof(color_precision_t));
-// }
+    fill(0);
 
-// void Renderer2d::fill_buffer(buffer_t buffer, size_t width, size_t height, color_precision_t r, color_precision_t g, color_precision_t b, color_precision_t a) {
-//     for (size_t r = 0; r < width; ++r) {
-//         for (size_t c = 0; c < height; ++c) {
-//             buffer[r * width + c + 0] = r;
-//             buffer[r * width + c + 1] = g;
-//             buffer[r * width + c + 2] = b;
-//             buffer[r * width + c + 3] = a;
-//         }
-//     }
-// }
+    b_init(Phyber::Renderer2D::CPU::pixel_buffer, g_width, g_height);
+}
 
-// static void _render_go(Renderer2d::buffer_t buffer, size_t width, size_t height, GameObject2d *go) {
-//     // first we need get a square that will fit the transformed sprite
-//     // -> get untransformed size
-//     Vec2 top_left(0,0);
-//     Vec2 bottom_right = go->sprite.size;
-//     Vec2 center = go->sprite.center;
-//     // -> translate to (0,0)
-//     top_left -= center;
-//     bottom_right -= center;
-//     // -> scale
-//     top_left.x *= go->transform.scale.x;
-//     top_left.y *= go->transform.scale.y;
-//     bottom_right.x *= go->transform.scale.x;
-//     bottom_right.y *= go->transform.scale.y;
-//     // -> rotate
-//     const float radians = radians_to_range(go->transform.rot);
-//     const Mat2x2 rotation = Mat2x2::rotation_matrix(radians);
-//     top_left *= rotation;
-//     top_left *= rotation;
-//     // -> get how big is the pixel region
-//     const int x_diff = ceilf(abs(bottom_right.x - top_left.x));
-//     const int y_diff = ceilf(abs(bottom_right.y - top_left.y));
+bool Phyber::Renderer2D::CPU::render(const Phyber::Camera2D &camera) {
+    for (const Phyber::GameObject2D *go : gos) {
+        raster_go2D(*go, camera);
+    }
 
-//     // from the final pixel positions, we sample from the original image
-//     // transformation is:
-//     // 1) pixel space -> sprite local space
-//     // 2) rotate
-//     // 3) scale
-//     // 4) translate
-//     // the inverse_transform does this in the inverse direction
-//     const Mat3x3 translate_inv({
-//         1, 0, -go->transform.pos.x,
-//         0, 1, -go->transform.pos.y,
-//         0, 0, 1
-//     });
-//     const Mat3x3 scale_inv(Vec3(-go->transform.scale.x, -go->transform.scale.y, 1));
-//     const Mat3x3 rotate_inv = Mat3x3::rotation_matrix_z(-radians);
-//     const Mat3x3 pixel2sprite_transform_inv = Mat3x3::translation_2d_matrix(&go->sprite.center);
-//     const Mat3x3 inverse_transform =
-//         translate_inv *
-//         scale_inv *
-//         rotate_inv *
-//         pixel2sprite_transform_inv;
+    return draw();
+}
 
-//     Vec3 pos(1,1,1);
+bool Phyber::Renderer2D::CPU::draw() {
+    return b_draw(Phyber::Renderer2D::CPU::pixel_buffer, g_width, g_height);
+}
 
-//     for (int x = 0; x < x_diff; ++x) {
-//         for (int y = 0; y < y_diff; ++y) {
-//             // set pos to the global final position of the pixel
-//             pos.x = x + go->transform.pos.x;
-//             pos.y = y + go->transform.pos.y;
+float Phyber::Renderer2D::CPU::dt() {
+    return b_dt();
+}
 
-//             // inverse transform pos to pixel space
-//             pos *= inverse_transform;
+void Phyber::Renderer2D::CPU::destroy() {
+    if (Phyber::Renderer2D::CPU::pixel_buffer) { free(Phyber::Renderer2D::CPU::pixel_buffer); }
+        if (Phyber::Renderer2D::CPU::z_buffer) { free(Phyber::Renderer2D::CPU::z_buffer); }
 
-//             // sample the pixel in pixel space
-//             const int px_space_r = static_cast<int>(pos.x);
-//             const int px_space_c = static_cast<int>(pos.y);
-//             // sanity check
-//             if (px_space_r < 0 || px_space_r >= go->sprite.size.x) {
-//                 throw std::runtime_error("Pixel sampling out of bounds (x)");
-//             } else if (px_space_c < 0 || px_space_r>= go->sprite.size.y) {
-//                 throw std::runtime_error("Pixel sampling out of bounds (y)");
-//             }
-//             color_precision_t *pixel = &go->sprite.pixels[px_space_r * go->sprite.size.x + px_space_c]; // this is a color_precision_t[4]
-//         }
-//     }
-// }
+    b_destroy();
+}
 
-// void Renderer2d::render(Renderer2d::buffer_t buffer, size_t width, size_t height) {
+bool Phyber::Renderer2D::add_go(GameObject2D &go) {
+    if (std::find(gos.begin(), gos.end(), &go) != gos.end()) { return false; }
+    gos.push_back(&go);
+    return true;
+}
 
-// }
+bool Phyber::Renderer2D::remove_go(GameObject2D &go) {
+    auto ptr = std::find(gos.begin(), gos.end(), &go);
+    if (ptr == gos.end()) { return false; }
+    gos.erase(ptr);
+    return true;
+}
 
-// void Renderer2d::clear_buffer() {
-//     clear_buffer(_buffer_2d[buffer_side], PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH, PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT);
-// }
+extern void Phyber::Renderer2D::CPU::fill(color_precision_t color) {
+    std::fill(Phyber::Renderer2D::CPU::pixel_buffer, Phyber::Renderer2D::CPU::pixel_buffer + g_width * g_height, color);
+    std::fill(Phyber::Renderer2D::CPU::z_buffer, Phyber::Renderer2D::CPU::z_buffer + g_width * g_height, std::numeric_limits<z_buffer_precision_t>::min());
+}
 
-// void Renderer2d::fill_buffer(color_precision_t r, color_precision_t g, color_precision_t b, color_precision_t a) {
-//     fill_buffer(_buffer_2d[buffer_side], PHYBER_ENGINE_RENDERER_2D_RESOLUTION_WIDTH, PHYBER_ENGINE_RENDERER_2D_RESOLUTION_HEIGHT, r, g, b, a);
-// }
+void abort() {
+    Phyber::Renderer2D::CPU::destroy();
+    exit(1);
+}
