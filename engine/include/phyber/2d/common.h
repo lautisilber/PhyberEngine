@@ -13,35 +13,42 @@
 
 namespace Phyber {
 
-struct Sprite {
+struct Texture {
+    Texture() {}
+    ~Texture();
+
     color_precision_t *pixels = nullptr; // r, g, b, a
     glm::uvec2 size_uv;
-    glm::uvec2 center_uv;
     bool transparent; // oposed to opaque
-
-    Sprite() {}
-    Sprite(color_precision_t *pixels, size_t width, size_t height, int center_x, int center_y);
-    ~Sprite();
 
     void load_png(const char *fname);
     void load_pixels(color_precision_t *pixels, size_t width, size_t height);
     void reset();
 };
 
+struct Sprite {
+    Texture *texture = nullptr;
+    glm::vec2 center_uv;
+
+    void reset();
+};
+
 struct Rect {
-    float top_left, top_right, bottom_left, bottom_right;
+    glm::vec2 top_left, bottom_right;
 };
 
 struct Oval {
     float radius_h, radius_v;
 };
 
-struct RectPrimitive : Rect {
+struct RectPrimitive {
+    Rect rect;
     color_precision_t color;
     bool filled;
 };
 
-struct OvalPrimitive : Rect {
+struct OvalPrimitive {
+    Oval oval;
     color_precision_t color;
     bool filled;
 };
