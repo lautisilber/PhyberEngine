@@ -1,0 +1,65 @@
+#include "sdl_2D_gpu.h"
+
+#include "phyber/logging.h"
+
+#include <SDL3/SDL.h>
+
+SDL_Window* window;
+SDL_Renderer* renderer;
+SDL_GPUDevice* device;
+SDL_GPUGraphicsPipeline* graphicsPipeline;
+
+#if defined(__APPLE__)
+    #define SHADER_FORMAT SDL_GPU_SHADERFORMAT_MSL
+    #define SHADER_FORMAT_EXTENSION ".msl"
+#else
+    #define SHADER_FORMAT SDL_GPU_SHADERFORMAT_SPIRV
+    #define SHADER_FORMAT_EXTENSION ".spv"
+#endif
+
+#define SDL_GPU_DEBUG true // TODO: change this to be easily configurable
+
+struct Vertex {
+    float pos[3];   // local pos
+    float uv[2];    // for textures
+    uint32_t color; // packed RGBA
+};
+
+static inline void set_renderer_color(color_precision_t c) {
+    SDL_SetRendererDrawColor(COLOR_GET_RED(c), COLOR_GET_GREEN(c), COLOR_GET_BLUE(c), COLOR_GET_ALPHA(c));
+}
+
+void Phyber::Renderer2D::GPU::SDL::fill(color_precision_t color) {
+    set_renderer_color(color);
+    SDL_RenderClear(renderer);
+}
+
+void Phyber::Renderer2D::GPU::SDL::init(int *buffer, unsigned int width, unsigned int height) {
+    if (!SDL_Init(SDL_INIT_VIDEO)) {
+        PHYBER_LOG_CRITICAL("Couldn't initialize SDL Video Subsystem: %s", SDL_GetError());
+        exit(1);
+    }
+
+    // create a window
+    if (!SDL_CreateWindowAndRenderer("Hello, Triangle!", width, height, NULL, window, renderer)) {
+        PHYBER_LOG_CRITICAL("Couldn't create SDL window and renderer: %s", SDL_GetError());
+        exit(1);
+    }
+
+    device = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV, SDL_GPU_DEBUG, NULL);
+
+    SDL_ClaimWindowForGPUDevice(device, window);
+
+
+    // create the device
+    device = SDL_CreateGPUDevice(SHADER_FORMAT, true, NULL);
+    if (!device) {
+        SDL_Log("GPU device creation failed: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+    SDL_ClaimWindowForGPUDevice(device, window);
+    if (!SDL_ClaimWindowForGPUDevice(device, window)) {
+        SDL_Log("Failed to claim window: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+}

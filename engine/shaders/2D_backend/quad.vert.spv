@@ -1,0 +1,18 @@
+#version 450
+
+layout(location = 0) in vec3 in_pos;
+layout(location = 1) in uint32_t in_color;
+
+layout(location = 0) out vec2 frag_uv;
+layout(location = 1) out vec4 frag_color;
+
+void main() {
+    frag_uv = in_uv;
+    frag_color = vec4(
+        ((in_color & 0xFF000000) >> 24) / 255,
+        ((in_color & 0x00FF0000) >> 16) / 255,
+        ((in_color & 0x0000FF00) >> 8) / 255,
+        ((in_color & 0x000000FF)) / 255,
+    );
+    gl_Position = vec4(in_pos, 1.0);
+}

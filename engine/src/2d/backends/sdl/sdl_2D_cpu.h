@@ -1,5 +1,5 @@
-#ifndef BACKEND_SDL_RENDERER_2D_CPU_h
-#define BACKEND_SDL_RENDERER_2D_CPU_h
+#ifndef BACKEND_SDL_RENDERER_2D_CPU_H
+#define BACKEND_SDL_RENDERER_2D_CPU_H
 
 #include "phyber/2d/renderer.h"
 
@@ -11,10 +11,9 @@ namespace SDL {
     extern bool draw(color_precision_t *buffer, unsigned int width, unsigned int height);
     extern float dt();
     extern void destroy();
-
 }
 }
 }
 }
 
-#endif /* BACKEND_SDL_RENDERER_2D_CPU_h */
+#endif /* BACKEND_SDL_RENDERER_2D_CPU_H */
